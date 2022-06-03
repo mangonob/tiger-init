@@ -2,5 +2,6 @@
   "files.exclude": {
     ".stack-work/": true,
     ".vscode/": true
-  }
+  },
+  "haskell.manageHLS": "GHCup"
 }
