@@ -111,7 +111,7 @@ startWith (x : xs) (y : ys)
 keyword :: [Char] -> [Char] -> Maybe [Char]
 keyword k s = do
   result <- startWith k s
-  guard $ null result || (isSpace) (head result)
+  guard $ null result || isSpace (head result)
   return result
 
 bad :: Show a => a -> Pos -> b
