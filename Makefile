@@ -1,2 +1,2 @@
 all:
-	ghcup run stack ghci
+	stack ghci
