@@ -22,3 +22,15 @@ main = do
             "    -r   Raw text file.",
             "    -h   Show help message."
           ]
+
+data Pos = Pos Int Int deriving (Show, Eq)
+
+data Token = IntToken Int Pos | Let Pos deriving (Show, Eq)
+
+token :: Pos -> String -> Token
+token p s = IntToken (read s) p
+
+letTk :: Pos -> String -> Token
+letTk p s = Let p
+
+letTk' = flip (const Let)

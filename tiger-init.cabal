@@ -43,6 +43,8 @@ library
       Semantic.Translate
       Semantic.Tree
       Semantic.Types
+      Simple.Lexer
+      Simple.Main
       Symbol
       Token
   other-modules:
