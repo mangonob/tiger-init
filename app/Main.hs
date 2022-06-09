@@ -23,14 +23,13 @@ main = do
             "    -h   Show help message."
           ]
 
-data Pos = Pos Int Int deriving (Show, Eq)
+data T = T {a :: Int, b :: String} deriving (Show, Eq)
 
-data Token = IntToken Int Pos | Let Pos deriving (Show, Eq)
+aaa :: IO T
+aaa = return (T 1 "hello")
 
-token :: Pos -> String -> Token
-token p s = IntToken (read s) p
-
-letTk :: Pos -> String -> Token
-letTk p s = Let p
-
-letTk' = flip (const Let)
+bbb :: IO ()
+bbb = do
+  value <- aaa
+  let T x y = value
+  return ()

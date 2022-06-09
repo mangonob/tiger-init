@@ -5,4 +5,6 @@ import Simple.Lexer
 main :: IO ()
 main = do
   contents <- getContents
-  print $ alexScanTokens contents
+  return ()
+
+-- print $ alexScanTokens contents
