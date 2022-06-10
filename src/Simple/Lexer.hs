@@ -4,6 +4,8 @@
 
 module Simple.Lexer where
 
+import Data.ByteString.Lazy.Char8 (unpack)
+
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
 #elif defined(__GLASGOW_HASKELL__)
@@ -22,12 +24,16 @@ import Array
 -- it for any purpose whatsoever.
 
 
-import Control.Applicative as App (Applicative (..))
+
 
 
 import Data.Word (Word8)
 
 
+import Data.Int (Int64)
+import qualified Data.Char
+import qualified Data.ByteString.Lazy     as ByteString
+import qualified Data.ByteString.Internal as ByteString (w2c)
 
 
 
@@ -42,35 +48,31 @@ import Data.Word (Word8)
 
 
 
-import Data.Char (ord)
-import qualified Data.Bits
 
--- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
-utf8Encode :: Char -> [Word8]
-utf8Encode = uncurry (:) . utf8Encode'
 
-utf8Encode' :: Char -> (Word8, [Word8])
-utf8Encode' c = case go (ord c) of
-                  (x, xs) -> (fromIntegral x, map fromIntegral xs)
- where
-  go oc
-   | oc <= 0x7f       = ( oc
-                        , [
-                        ])
 
-   | oc <= 0x7ff      = ( 0xc0 + (oc `Data.Bits.shiftR` 6)
-                        , [0x80 + oc Data.Bits..&. 0x3f
-                        ])
 
-   | oc <= 0xffff     = ( 0xe0 + (oc `Data.Bits.shiftR` 12)
-                        , [0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
-                        , 0x80 + oc Data.Bits..&. 0x3f
-                        ])
-   | otherwise        = ( 0xf0 + (oc `Data.Bits.shiftR` 18)
-                        , [0x80 + ((oc `Data.Bits.shiftR` 12) Data.Bits..&. 0x3f)
-                        , 0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
-                        , 0x80 + oc Data.Bits..&. 0x3f
-                        ])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -80,46 +82,46 @@ type Byte = Word8
 -- The input type
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
-                  [Byte],       -- pending bytes on current char
-                  String)       -- current input string
+                  ByteString.ByteString,        -- current input string
+                  Int64)           -- bytes consumed so far
 
 ignorePendingBytes :: AlexInput -> AlexInput
-ignorePendingBytes (p,c,_ps,s) = (p,c,[],s)
+ignorePendingBytes i = i   -- no pending bytes when lexing bytestrings
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (_p,c,_bs,_s) = c
+alexInputPrevChar (_,c,_,_) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
-alexGetByte (_,_,[],[]) = Nothing
-alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
-                              in case utf8Encode' c of
-                                   (b, bs) -> p' `seq`  Just (b, (p', c, bs, s))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+alexGetByte (p,_,cs,n) =
+    case ByteString.uncons cs of
+        Nothing -> Nothing
+        Just (b, cs') ->
+            let c   = ByteString.w2c b
+                p'  = alexMove p c
+                n'  = n+1
+            in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
 
 
 
@@ -185,78 +187,38 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 -- Monad (default and with ByteString input)
 
 
-data AlexState = AlexState {
-        alex_pos :: !AlexPosn,  -- position at current input location
 
-        alex_inp :: String,     -- the current input
-        alex_chr :: !Char,      -- the character before the input
-        alex_bytes :: [Byte],
 
 
 
 
 
-        alex_scd :: !Int        -- the current startcode
 
 
 
-    }
 
--- Compile with -funbox-strict-fields for best results!
 
 
-runAlex :: String -> Alex a -> Either String a
-runAlex input__ (Alex f)
-   = case f (AlexState {alex_bytes = [],
 
 
 
 
 
-                        alex_pos = alexStartPos,
-                        alex_inp = input__,
-                        alex_chr = '\n',
 
 
 
-                        alex_scd = 0}) of Left msg -> Left msg
-                                          Right ( _, a ) -> Right a
 
-newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
-instance Functor Alex where
-  fmap f a = Alex $ \s -> case unAlex a s of
-                            Left msg -> Left msg
-                            Right (s', a') -> Right (s', f a')
 
-instance Applicative Alex where
-  pure a   = Alex $ \s -> Right (s, a)
-  fa <*> a = Alex $ \s -> case unAlex fa s of
-                            Left msg -> Left msg
-                            Right (s', f) -> case unAlex a s' of
-                                               Left msg -> Left msg
-                                               Right (s'', b) -> Right (s'', f b)
 
-instance Monad Alex where
-  m >>= k  = Alex $ \s -> case unAlex m s of
-                                Left msg -> Left msg
-                                Right (s',a) -> unAlex (k a) s'
-  return = App.pure
 
-alexGetInput :: Alex AlexInput
-alexGetInput
 
- = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
-        Right (s, (pos,c,bs,inp__))
 
 
 
 
 
-alexSetInput :: AlexInput -> Alex ()
 
-alexSetInput (pos,c,bs,inp__)
- = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
 
 
 
@@ -264,16 +226,9 @@ alexSetInput (pos,c,bs,inp__)
 
 
 
-                  state__@(AlexState{}) -> Right (state__, ())
 
-alexError :: String -> Alex a
-alexError message = Alex $ const $ Left message
 
-alexGetStartCode :: Alex Int
-alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
 
-alexSetStartCode :: Int -> Alex ()
-alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
 
 
@@ -283,56 +238,103 @@ alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
 
 
-alexMonadScan = do
 
-  inp__ <- alexGetInput
 
 
 
-  sc <- alexGetStartCode
-  case alexScan inp__ sc of
-    AlexEOF -> alexEOF
-    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
-    AlexSkip  inp__' _len -> do
-        alexSetInput inp__'
-        alexMonadScan
 
-    AlexToken inp__' len action -> do
 
 
 
-        alexSetInput inp__'
-        action (ignorePendingBytes inp__) len
 
--- -----------------------------------------------------------------------------
--- Useful token actions
 
 
-type AlexAction result = AlexInput -> Int -> Alex result
 
 
 
 
--- just ignore this token and scan another one
--- skip :: AlexAction result
-skip _input _len = alexMonadScan
 
--- ignore this token, but set the start code to a new value
--- begin :: Int -> AlexAction result
-begin code _input _len = do alexSetStartCode code; alexMonadScan
 
--- perform an action for this token, and set the start code to a new value
-andBegin :: AlexAction result -> Int -> AlexAction result
-(action `andBegin` code) input__ len = do
-  alexSetStartCode code
-  action input__ len
 
 
-token :: (AlexInput -> Int -> token) -> AlexAction token
 
 
 
-token t input__ len = return (t input__ len)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -417,15 +419,15 @@ token t input__ len = return (t input__ len)
 -- Posn wrapper, ByteString version
 
 
-
-
-
-
-
-
-
-
-
+--alexScanTokens :: ByteString.ByteString -> [token]
+alexScanTokens str0 = go (alexStartPos,'\n',str0,0)
+  where go inp__@(pos,_,str,n) =
+          case alexScan inp__ 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexSkip  inp__' _len       -> go inp__'
+                AlexToken inp__'@(_,_,_,n') _ act ->
+                  act pos (ByteString.take (n'-n) str) : go inp__'
 
 
 
@@ -1649,7 +1651,7 @@ alex_actions = array (0 :: Int, 13)
   , (0,alex_action_11)
   ]
 
-{-# LINE 28 "Lexer.x" #-}
+{-# LINE 30 "Lexer.x" #-}
 
 data Token = IntToken Int AlexPosn 
     | DoubleToken Double AlexPosn 
@@ -1664,26 +1666,17 @@ data Token = IntToken Int AlexPosn
     | Let AlexPosn 
     | EOF AlexPosn deriving (Show, Eq)
 
-alexEOF :: Alex Token
-alexEOF = do 
-    input <- alexGetInput
-    let (pos, _, _, _)  = input
-    return (EOF pos)
-
-token' :: (String -> AlexPosn -> Token) -> AlexAction Token
-token' f = token (\(pos, _, _, s) _ -> f s pos)
-
-alex_action_1 =  token' $ DoubleToken . read 
-alex_action_2 =  token' $ IntToken . read 
-alex_action_3 =  token' $ const Let 
-alex_action_4 =  token' $ const Plus 
-alex_action_5 =  token' $ const Minus
-alex_action_6 =  token' $ const Mul 
-alex_action_7 =  token' $ const Div 
-alex_action_8 =  token' $ const Assign
-alex_action_9 =  token' $ const LeftParen 
-alex_action_10 =  token' $ const RightParen 
-alex_action_11 =  token' $ IdToken 
+alex_action_1 =  flip $ DoubleToken . read . unpack
+alex_action_2 =  flip $ IntToken . read . unpack
+alex_action_3 =  flip $ const Let 
+alex_action_4 =  flip $ const Plus 
+alex_action_5 =  flip $ const Minus
+alex_action_6 =  flip $ const Mul 
+alex_action_7 =  flip $ const Div 
+alex_action_8 =  flip $ const Assign
+alex_action_9 =  flip $ const LeftParen 
+alex_action_10 =  flip $ const RightParen 
+alex_action_11 =  flip $ IdToken . unpack 
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- -----------------------------------------------------------------------------
 -- ALEX TEMPLATE

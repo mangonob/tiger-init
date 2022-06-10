@@ -54,6 +54,7 @@ library
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
     , haskeline
     , mtl
@@ -69,6 +70,7 @@ executable tiger-init-exe
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
     , haskeline
     , mtl
@@ -86,6 +88,7 @@ test-suite tiger-init-test
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
     , haskeline
     , mtl

@@ -25,6 +25,7 @@ dependencies:
   - containers
   - array
   - haskeline
+  - bytestring
 
 library:
   source-dirs: src

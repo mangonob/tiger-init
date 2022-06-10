@@ -1,8 +1,10 @@
 {
 module Simple.Lexer where
+
+import Data.ByteString.Lazy.Char8 (unpack)
 }
 
-%wrapper "monad"
+%wrapper "posn-bytestring"
 
 $digit  = [0-9]
 $alpha  = [a-zA-Z]
@@ -12,18 +14,18 @@ tokens :-
 
 $white+                 ;
 
-$digit+\.($digit*)?     { token' $ DoubleToken . read }
-$digit+                 { token' $ IntToken . read }
+$digit+\.($digit*)?     { flip $ DoubleToken . read . unpack}
+$digit+                 { flip $ IntToken . read . unpack}
 
-"let"                   { token' $ const Let }
-"+"                     { token' $ const Plus }
-"-"                     { token' $ const Minus}
-"*"                     { token' $ const Mul }
-"/"                     { token' $ const Div }
-"="                     { token' $ const Assign}
-"("                     { token' $ const LeftParen }
-")"                     { token' $ const RightParen }
-@id                     { token' $ IdToken }
+"let"                   { flip $ const Let }
+"+"                     { flip $ const Plus }
+"-"                     { flip $ const Minus}
+"*"                     { flip $ const Mul }
+"/"                     { flip $ const Div }
+"="                     { flip $ const Assign}
+"("                     { flip $ const LeftParen }
+")"                     { flip $ const RightParen }
+@id                     { flip $ IdToken . unpack }
 
 {
 data Token = IntToken Int AlexPosn 
@@ -38,13 +40,4 @@ data Token = IntToken Int AlexPosn
     | Div AlexPosn
     | Let AlexPosn 
     | EOF AlexPosn deriving (Show, Eq)
-
-alexEOF :: Alex Token
-alexEOF = do 
-    input <- alexGetInput
-    let (pos, _, _, _)  = input
-    return (EOF pos)
-
-token' :: (String -> AlexPosn -> Token) -> AlexAction Token
-token' f = token (\(pos, _, _, s) _ -> f s pos)
 }
