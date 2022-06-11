@@ -22,14 +22,3 @@ main = do
             "    -r   Raw text file.",
             "    -h   Show help message."
           ]
-
-data T = T {a :: Int, b :: String} deriving (Show, Eq)
-
-aaa :: IO T
-aaa = return (T 1 "hello")
-
-bbb :: IO ()
-bbb = do
-  value <- aaa
-  let T x y = value
-  return ()
