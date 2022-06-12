@@ -1,9 +1,14 @@
 module Simple.Main where
 
-import qualified Data.ByteString.Lazy as ByteString
 import Simple.Lexer
+import Simple.Parser (parse)
+import Utils (readLine)
 
 main :: IO ()
 main = do
-  contents <- ByteString.getContents
-  print $ alexScanTokens contents
+  maybeContents <- readLine
+  case maybeContents of
+    Nothing -> return ()
+    Just contents -> do
+      print $ parse $ alexScanTokens contents
+      main

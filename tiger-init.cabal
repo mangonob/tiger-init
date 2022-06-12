@@ -43,10 +43,14 @@ library
       Semantic.Translate
       Semantic.Tree
       Semantic.Types
+      Simple.AbSyn
       Simple.Lexer
       Simple.Main
+      Simple.Parser
+      Simple.Token
       Symbol
       Token
+      Utils
   other-modules:
       Paths_tiger_init
   hs-source-dirs:

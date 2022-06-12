@@ -1,10 +1,10 @@
 {
 module Simple.Lexer where
 
-import Data.ByteString.Lazy.Char8 (unpack)
+import Simple.Token
 }
 
-%wrapper "posn-bytestring"
+%wrapper "posn"
 
 $digit  = [0-9]
 $alpha  = [a-zA-Z]
@@ -14,8 +14,8 @@ tokens :-
 
 $white+                 ;
 
-$digit+\.($digit*)?     { flip $ DoubleToken . read . unpack}
-$digit+                 { flip $ IntToken . read . unpack}
+$digit+\.($digit*)?     { flip $ DoubleToken . read }
+$digit+                 { flip $ IntToken . read }
 
 "let"                   { flip $ const Let }
 "+"                     { flip $ const Plus }
@@ -25,19 +25,4 @@ $digit+                 { flip $ IntToken . read . unpack}
 "="                     { flip $ const Assign}
 "("                     { flip $ const LeftParen }
 ")"                     { flip $ const RightParen }
-@id                     { flip $ IdToken . unpack }
-
-{
-data Token = IntToken Int AlexPosn 
-    | DoubleToken Double AlexPosn 
-    | IdToken String AlexPosn 
-    | Assign AlexPosn
-    | LeftParen AlexPosn
-    | RightParen AlexPosn
-    | Plus AlexPosn
-    | Minus AlexPosn
-    | Mul AlexPosn
-    | Div AlexPosn
-    | Let AlexPosn 
-    | EOF AlexPosn deriving (Show, Eq)
-}
+@id                     { flip $ IdToken }

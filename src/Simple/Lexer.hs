@@ -4,7 +4,7 @@
 
 module Simple.Lexer where
 
-import Data.ByteString.Lazy.Char8 (unpack)
+import Simple.Token
 
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
@@ -36,10 +36,6 @@ import GlaExts
 import Data.Word (Word8)
 
 
-import Data.Int (Int64)
-import qualified Data.Char
-import qualified Data.ByteString.Lazy     as ByteString
-import qualified Data.ByteString.Internal as ByteString (w2c)
 
 
 
@@ -54,31 +50,35 @@ import qualified Data.ByteString.Internal as ByteString (w2c)
 
 
 
+import Data.Char (ord)
+import qualified Data.Bits
 
+-- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
+utf8Encode :: Char -> [Word8]
+utf8Encode = uncurry (:) . utf8Encode'
 
+utf8Encode' :: Char -> (Word8, [Word8])
+utf8Encode' c = case go (ord c) of
+                  (x, xs) -> (fromIntegral x, map fromIntegral xs)
+ where
+  go oc
+   | oc <= 0x7f       = ( oc
+                        , [
+                        ])
 
+   | oc <= 0x7ff      = ( 0xc0 + (oc `Data.Bits.shiftR` 6)
+                        , [0x80 + oc Data.Bits..&. 0x3f
+                        ])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   | oc <= 0xffff     = ( 0xe0 + (oc `Data.Bits.shiftR` 12)
+                        , [0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
+                        , 0x80 + oc Data.Bits..&. 0x3f
+                        ])
+   | otherwise        = ( 0xf0 + (oc `Data.Bits.shiftR` 18)
+                        , [0x80 + ((oc `Data.Bits.shiftR` 12) Data.Bits..&. 0x3f)
+                        , 0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
+                        , 0x80 + oc Data.Bits..&. 0x3f
+                        ])
 
 
 
@@ -88,46 +88,46 @@ type Byte = Word8
 -- The input type
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
-                  ByteString.ByteString,        -- current input string
-                  Int64)           -- bytes consumed so far
+                  [Byte],       -- pending bytes on current char
+                  String)       -- current input string
 
 ignorePendingBytes :: AlexInput -> AlexInput
-ignorePendingBytes i = i   -- no pending bytes when lexing bytestrings
+ignorePendingBytes (p,c,_ps,s) = (p,c,[],s)
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (_,c,_,_) = c
+alexInputPrevChar (_p,c,_bs,_s) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,_,cs,n) =
-    case ByteString.uncons cs of
-        Nothing -> Nothing
-        Just (b, cs') ->
-            let c   = ByteString.w2c b
-                p'  = alexMove p c
-                n'  = n+1
-            in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (_,_,[],[]) = Nothing
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
+                              in case utf8Encode' c of
+                                   (b, bs) -> p' `seq`  Just (b, (p', c, bs, s))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -410,14 +410,14 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 -- Adds text positions to the basic model.
 
 
-
-
-
-
-
-
-
-
+--alexScanTokens :: String -> [token]
+alexScanTokens str0 = go (alexStartPos,'\n',[],str0)
+  where go inp__@(pos,_,_,str) =
+          case alexScan inp__ 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexSkip  inp__' _ln     -> go inp__'
+                AlexToken inp__' len act -> act pos (take len str) : go inp__'
 
 
 
@@ -425,15 +425,15 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 -- Posn wrapper, ByteString version
 
 
---alexScanTokens :: ByteString.ByteString -> [token]
-alexScanTokens str0 = go (alexStartPos,'\n',str0,0)
-  where go inp__@(pos,_,str,n) =
-          case alexScan inp__ 0 of
-                AlexEOF -> []
-                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
-                AlexSkip  inp__' _len       -> go inp__'
-                AlexToken inp__'@(_,_,_,n') _ act ->
-                  act pos (ByteString.take (n'-n) str) : go inp__'
+
+
+
+
+
+
+
+
+
 
 
 
@@ -507,23 +507,8 @@ alex_actions = array (0 :: Int, 13)
   , (0,alex_action_11)
   ]
 
-{-# LINE 30 "Lexer.x" #-}
-
-data Token = IntToken Int AlexPosn 
-    | DoubleToken Double AlexPosn 
-    | IdToken String AlexPosn 
-    | Assign AlexPosn
-    | LeftParen AlexPosn
-    | RightParen AlexPosn
-    | Plus AlexPosn
-    | Minus AlexPosn
-    | Mul AlexPosn
-    | Div AlexPosn
-    | Let AlexPosn 
-    | EOF AlexPosn deriving (Show, Eq)
-
-alex_action_1 =  flip $ DoubleToken . read . unpack
-alex_action_2 =  flip $ IntToken . read . unpack
+alex_action_1 =  flip $ DoubleToken . read 
+alex_action_2 =  flip $ IntToken . read 
 alex_action_3 =  flip $ const Let 
 alex_action_4 =  flip $ const Plus 
 alex_action_5 =  flip $ const Minus
@@ -532,7 +517,7 @@ alex_action_7 =  flip $ const Div
 alex_action_8 =  flip $ const Assign
 alex_action_9 =  flip $ const LeftParen 
 alex_action_10 =  flip $ const RightParen 
-alex_action_11 =  flip $ IdToken . unpack 
+alex_action_11 =  flip $ IdToken 
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- -----------------------------------------------------------------------------
 -- ALEX TEMPLATE
