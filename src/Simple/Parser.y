@@ -26,21 +26,21 @@ double          { T.DoubleToken $$ _ }
 
 %%
 
-Expr        : Expr '+' Term         { $1 + $3 }
-            | Expr '-' Term         { $1 - $3 }
-            | Term                  { $1 }
+Expr        : Expr '+' Term         { Add $1 $3 }
+            | Expr '-' Term         { Sub $1 $3 }
+            | Term                  { Term $1 }
 
-Term        : Term '*' Factor       { $1 * $3 }
-            | Term '/' Factor       { $1 / $3 }
-            | Factor                { $1 }
+Term        : Term '*' Factor       { Mul $1 $3 }
+            | Term '/' Factor       { Div $1 $3 }
+            | Factor                { Factor $1 }
 
-Factor      : id                    { undefined }
-            | integer               { fromIntegral $1 }
-            | double                { $1 }
-            | '(' Expr ')'          { $2 }
+Factor      : id                    { Id $1 }
+            | integer               { Int $1 }
+            | double                { Double $1 }
+            | '(' Expr ')'          { Brack $2 }
 
 {
-parseError = [T.Token L.AlexPosn] -> a
+parseError :: [T.Token L.AlexPosn] -> a
 parseError [] = error "parse error"
-parseError (t:_) = error $ "parse at " ++ show t
+parseError (t:_) = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
 }

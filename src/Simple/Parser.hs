@@ -144,7 +144,7 @@ happyReduction_1 (HappyAbsSyn5  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (happy_var_1 + happy_var_3
+		 (Add happy_var_1 happy_var_3
 	)
 happyReduction_1 _ _ _  = notHappyAtAll 
 
@@ -155,7 +155,7 @@ happyReduction_2 (HappyAbsSyn5  happy_var_3)
 	_
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (happy_var_1 - happy_var_3
+		 (Sub happy_var_1 happy_var_3
 	)
 happyReduction_2 _ _ _  = notHappyAtAll 
 
@@ -164,7 +164,7 @@ happyReduction_2 _ _ _  = notHappyAtAll
 happyReduce_3 = happySpecReduce_1  4# happyReduction_3
 happyReduction_3 (HappyAbsSyn5  happy_var_1)
 	 =  HappyAbsSyn4
-		 (happy_var_1
+		 (Term happy_var_1
 	)
 happyReduction_3 _  = notHappyAtAll 
 
@@ -175,7 +175,7 @@ happyReduction_4 (HappyAbsSyn6  happy_var_3)
 	_
 	(HappyAbsSyn5  happy_var_1)
 	 =  HappyAbsSyn5
-		 (happy_var_1 * happy_var_3
+		 (Mul happy_var_1 happy_var_3
 	)
 happyReduction_4 _ _ _  = notHappyAtAll 
 
@@ -186,7 +186,7 @@ happyReduction_5 (HappyAbsSyn6  happy_var_3)
 	_
 	(HappyAbsSyn5  happy_var_1)
 	 =  HappyAbsSyn5
-		 (happy_var_1 / happy_var_3
+		 (Div happy_var_1 happy_var_3
 	)
 happyReduction_5 _ _ _  = notHappyAtAll 
 
@@ -195,24 +195,25 @@ happyReduction_5 _ _ _  = notHappyAtAll
 happyReduce_6 = happySpecReduce_1  5# happyReduction_6
 happyReduction_6 (HappyAbsSyn6  happy_var_1)
 	 =  HappyAbsSyn5
-		 (happy_var_1
+		 (Factor happy_var_1
 	)
 happyReduction_6 _  = notHappyAtAll 
 
 #if __GLASGOW_HASKELL__ >= 710
 #endif
 happyReduce_7 = happySpecReduce_1  6# happyReduction_7
-happyReduction_7 _
+happyReduction_7 (HappyTerminal (T.IdToken happy_var_1 _))
 	 =  HappyAbsSyn6
-		 (undefined
+		 (Id happy_var_1
 	)
+happyReduction_7 _  = notHappyAtAll 
 
 #if __GLASGOW_HASKELL__ >= 710
 #endif
 happyReduce_8 = happySpecReduce_1  6# happyReduction_8
 happyReduction_8 (HappyTerminal (T.IntToken happy_var_1 _))
 	 =  HappyAbsSyn6
-		 (fromIntegral happy_var_1
+		 (Int happy_var_1
 	)
 happyReduction_8 _  = notHappyAtAll 
 
@@ -221,7 +222,7 @@ happyReduction_8 _  = notHappyAtAll
 happyReduce_9 = happySpecReduce_1  6# happyReduction_9
 happyReduction_9 (HappyTerminal (T.DoubleToken happy_var_1 _))
 	 =  HappyAbsSyn6
-		 (happy_var_1
+		 (Double happy_var_1
 	)
 happyReduction_9 _  = notHappyAtAll 
 
@@ -232,7 +233,7 @@ happyReduction_10 _
 	(HappyAbsSyn4  happy_var_2)
 	_
 	 =  HappyAbsSyn6
-		 (happy_var_2
+		 (Brack happy_var_2
 	)
 happyReduction_10 _ _ _  = notHappyAtAll 
 
@@ -287,7 +288,9 @@ parse tks = happyRunIdentity happySomeParser where
 happySeq = happyDontSeq
 
 
-parseError = undefined
+parseError :: [T.Token L.AlexPosn] -> a
+parseError [] = error "parse error"
+parseError (t:_) = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 
