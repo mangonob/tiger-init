@@ -18,6 +18,9 @@ $digit+\.($digit*)?     { flip $ DoubleToken . read }
 $digit+                 { flip $ IntToken . read }
 
 "let"                   { flip $ const Let }
+"if"                    { flip $ const If }
+"then"                  { flip $ const Then }
+"else"                  { flip $ const Else }
 "+"                     { flip $ const Plus }
 "-"                     { flip $ const Minus}
 "*"                     { flip $ const Mul }

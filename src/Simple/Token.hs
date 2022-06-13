@@ -12,5 +12,8 @@ data Token p
   | Mul {pos :: p}
   | Div {pos :: p}
   | Let {pos :: p}
+  | If {pos :: p}
+  | Then {pos :: p}
+  | Else {pos :: p}
   | EOF {pos :: p}
   deriving (Show, Eq)

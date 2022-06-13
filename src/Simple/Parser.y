@@ -16,6 +16,9 @@ import qualified Simple.Token as T
 %token
 
 let             { T.Let _ }
+if              { T.If _ }
+then            { T.Then _ }
+else            { T.Else _ }
 id              { T.IdToken $$ _ }
 integer         { T.IntToken $$ _ }
 double          { T.DoubleToken $$ _ }
@@ -27,8 +30,11 @@ double          { T.DoubleToken $$ _ }
 ')'             { T.RightParen _ }
 '='             { T.Assign _ }
 
+%nonassoc   DO
+%nonassoc   else
 %left       '+' '-'
 %left       '*' '/'
+%left       UMINUS
 
 %%
 
@@ -40,6 +46,14 @@ Expr_       : let id '=' Expr       { do
                 return (Left ())
             }
             | Expr                  { fmap Right $1 }
+            | if Expr then Expr %prec DO        { do
+                pre <- $2
+                if pre > 0 then fmap Right $4 else return (Left ())
+            }
+            | if Expr then Expr else Expr       { do
+                pre <- $2
+                if pre > 0 then fmap Right $4 else fmap Right $6
+            }
 
 Expr :: { State [(String, Double)] Double }
 Expr        : Expr '+' Expr         { liftM2 (+) $1 $3 }
@@ -54,6 +68,7 @@ Expr        : Expr '+' Expr         { liftM2 (+) $1 $3 }
             }
             | integer               { return (fromIntegral $1) }
             | double                { return $1 }
+            | '-' Expr %prec UMINUS { fmap (0-) $2 }
             | '(' Expr ')'          { $2 }
 
 {
