@@ -23,18 +23,20 @@ double          { T.DoubleToken $$ _ }
 '/'             { T.Div _ }
 '('             { T.LeftParen _ }
 ')'             { T.RightParen _ }
+'='             { T.Assign _ }
+
+%left       '+' '-'
+%left       '*' '/'
 
 %%
 
-Expr        : Expr '+' Term         { Add $1 $3 }
-            | Expr '-' Term         { Sub $1 $3 }
-            | Term                  { Term $1 }
+Expr_       : let id '=' Expr       { Let $2 $4 }
 
-Term        : Term '*' Factor       { Mul $1 $3 }
-            | Term '/' Factor       { Div $1 $3 }
-            | Factor                { Factor $1 }
-
-Factor      : id                    { Id $1 }
+Expr        : Expr '+' Expr         { Add $1 $3 }
+            | Expr '-' Expr         { Sub $1 $3 }
+            | Expr '*' Expr         { Mul $1 $3 }
+            | Expr '/' Expr         { Div $1 $3 }
+            | id                    { Id $1 }
             | integer               { Int $1 }
             | double                { Double $1 }
             | '(' Expr ')'          { Brack $2 }
