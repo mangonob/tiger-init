@@ -1,14 +1,21 @@
 module Simple.Main where
 
-import Simple.Lexer
+import Control.Monad.State (runState)
+import Simple.Lexer (alexScanTokens)
 import Simple.Parser (parse)
-import Utils (readLine)
+import Utils (readWithPrompt)
 
 main :: IO ()
-main = do
-  maybeContents <- readLine
+main = repl [("pi", pi), ("e", exp 1)]
+
+repl :: [(String, Double)] -> IO ()
+repl env = do
+  maybeContents <- readWithPrompt "eval>"
   case maybeContents of
     Nothing -> return ()
     Just contents -> do
-      print $ parse $ alexScanTokens contents
-      main
+      let (v, s) = runState (parse (alexScanTokens contents)) env
+      case v of
+        Left _ -> return ()
+        Right r -> print r
+      repl s

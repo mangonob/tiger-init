@@ -1,10 +1,12 @@
 {
 module Simple.Parser where
 
-import qualified Simple.Token as T
+import Control.Monad (liftM2)
+import Control.Monad.State (State, put, get)
+import Simple.AbSyn
 import Simple.Token (intValue, doubleValue, pos)
 import qualified Simple.Lexer as L
-import Simple.AbSyn
+import qualified Simple.Token as T
 }
 
 %name parse
@@ -30,16 +32,29 @@ double          { T.DoubleToken $$ _ }
 
 %%
 
-Expr_       : let id '=' Expr       { Let $2 $4 }
+Expr_ :: { State [(String, Double)] (Either () Double) }
+Expr_       : let id '=' Expr       { do
+                value <- $4
+                env <- get
+                put (($2, value):env)
+                return (Left ())
+            }
+            | Expr                  { fmap Right $1 }
 
-Expr        : Expr '+' Expr         { Add $1 $3 }
-            | Expr '-' Expr         { Sub $1 $3 }
-            | Expr '*' Expr         { Mul $1 $3 }
-            | Expr '/' Expr         { Div $1 $3 }
-            | id                    { Id $1 }
-            | integer               { Int $1 }
-            | double                { Double $1 }
-            | '(' Expr ')'          { Brack $2 }
+Expr :: { State [(String, Double)] Double }
+Expr        : Expr '+' Expr         { liftM2 (+) $1 $3 }
+            | Expr '-' Expr         { liftM2 (-) $1 $3 }
+            | Expr '*' Expr         { liftM2 (*) $1 $3 }
+            | Expr '/' Expr         { liftM2 (/) $1 $3 }
+            | id                    { do 
+                env <- get
+                case lookup $1 env of
+                    Nothing -> error $ "id: " ++ show $1 ++ " not found."
+                    Just value -> return value
+            }
+            | integer               { return (fromIntegral $1) }
+            | double                { return $1 }
+            | '(' Expr ')'          { $2 }
 
 {
 parseError :: [T.Token L.AlexPosn] -> a
