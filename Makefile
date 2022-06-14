@@ -9,7 +9,7 @@ parser: src/Simple/Parser.hs
 src/Simple/Lexer.hs: src/Simple/Lexer.x
 	alex -gi src/Simple/Lexer.x
 
-src/Simple/Parser.hs:
+src/Simple/Parser.hs: src/Simple/Parser.y
 	happy -gi src/Simple/Parser.y
 
 clean:

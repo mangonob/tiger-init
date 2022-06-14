@@ -28,6 +28,7 @@ $digit+                 { token' $ IntToken . read }
 "="                     { token' $ const Assign}
 "("                     { token' $ const LeftParen }
 ")"                     { token' $ const RightParen }
+";"                     { token' $ const Semicolon }
 @id                     { token' $ IdToken }
 
 {

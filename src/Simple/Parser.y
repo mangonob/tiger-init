@@ -5,14 +5,14 @@ import Control.Monad (liftM2, (>>=))
 import Control.Monad.State (State, put, get)
 import Simple.AbSyn
 import Simple.Token (intValue, doubleValue, pos)
-import qualified Simple.Lexer as L
+import Simple.Lexer (Alex, AlexPosn, alexMonadScan, alexError)
 import qualified Simple.Token as T
 }
 
 %name parse
-%monad { L.Alex }
-%lexer { L.alexMonadScan >>= } { T.EOF _ }
-%tokentype { T.Token L.AlexPosn }
+%monad { Alex }
+%lexer { alexMonadScan >>= } { T.EOF _ }
+%tokentype { T.Token AlexPosn }
 %error { parseError }
 
 %token
@@ -31,6 +31,7 @@ double          { T.DoubleToken $$ _ }
 '('             { T.LeftParen _ }
 ')'             { T.RightParen _ }
 '='             { T.Assign _ }
+';'             { T.Semicolon _ }
 
 %nonassoc   DO
 %nonassoc   else
@@ -40,40 +41,29 @@ double          { T.DoubleToken $$ _ }
 
 %%
 
-Expr_ :: { State [(String, Double)] (Either () Double) }
-Expr_       : let id '=' Expr       { do
-                value <- $4
-                env <- get
-                put (($2, value):env)
-                return (Left ())
-            }
-            | Expr                  { fmap Right $1 }
-            | if Expr then Expr %prec DO        { do
-                pre <- $2
-                if pre > 0 then fmap Right $4 else return (Left ())
-            }
-            | if Expr then Expr else Expr       { do
-                pre <- $2
-                if pre > 0 then fmap Right $4 else fmap Right $6
-            }
+Prog :: { [Expr] }
+Prog        : {- empty -}           { [] }
+            | Seq                   { $1 }
 
-Expr :: { State [(String, Double)] Double }
-Expr        : Expr '+' Expr         { liftM2 (+) $1 $3 }
-            | Expr '-' Expr         { liftM2 (-) $1 $3 }
-            | Expr '*' Expr         { liftM2 (*) $1 $3 }
-            | Expr '/' Expr         { liftM2 (/) $1 $3 }
-            | id                    { do 
-                env <- get
-                case lookup $1 env of
-                    Nothing -> error $ "id: " ++ show $1 ++ " not found."
-                    Just value -> return value
-            }
-            | integer               { return (fromIntegral $1) }
-            | double                { return $1 }
-            | '-' Expr %prec UMINUS { fmap (0-) $2 }
-            | '(' Expr ')'          { $2 }
+Seq :: { [Expr] }
+Seq         : Expr                  { [$1] }
+            | Seq ';' Expr          { $3 : $1}
+
+Expr :: { Expr }
+Expr        : Expr '+' Expr         { Add $1 $3 }
+            | Expr '-' Expr         { Sub $1 $3 }
+            | Expr '*' Expr         { Mul $1 $3 }
+            | Expr '/' Expr         { Div $1 $3 }
+            | id                    { Id $1 }
+            | integer               { Int $1 }
+            | double                { Double $1 }
+            | let id '=' Expr %prec DO          { Let $2 $4 }
+            | if Expr then Expr %prec DO        { If $2 $4 Nothing }
+            | if Expr then Expr else Expr       { If $2 $4 (Just $6) }
+            | '-' Expr %prec UMINUS { Minus $2 }
+            | '(' Expr ')'          { Brack $2 }
 
 {
-parseError :: T.Token L.AlexPosn -> L.Alex a
-parseError t = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
+parseError :: T.Token AlexPosn -> Alex a
+parseError t = alexError $ "parse error at token " ++ show t
 }

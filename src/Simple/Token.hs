@@ -15,5 +15,6 @@ data Token p
   | If {pos :: p}
   | Then {pos :: p}
   | Else {pos :: p}
+  | Semicolon {pos :: p}
   | EOF {pos :: p}
   deriving (Show, Eq)
