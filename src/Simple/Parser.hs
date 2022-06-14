@@ -5,7 +5,7 @@
 #endif
 module Simple.Parser where
 
-import Control.Monad (liftM2)
+import Control.Monad (liftM2, (>>=))
 import Control.Monad.State (State, put, get)
 import Simple.AbSyn
 import Simple.Token (intValue, doubleValue, pos)
@@ -34,10 +34,10 @@ data HappyAbsSyn
 type HappyReduction m = 
 	   Happy_GHC_Exts.Int# 
 	-> (T.Token L.AlexPosn)
-	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> m HappyAbsSyn)
-	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> m HappyAbsSyn)] 
+	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)
+	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
-	-> [(T.Token L.AlexPosn)] -> m HappyAbsSyn
+	-> m HappyAbsSyn
 -}
 
 action_0,
@@ -69,13 +69,13 @@ action_0,
  action_26,
  action_27,
  action_28,
- action_29 :: () => Happy_GHC_Exts.Int# -> ({-HappyReduction (HappyIdentity) = -}
+ action_29 :: () => Happy_GHC_Exts.Int# -> ({-HappyReduction (L.Alex) = -}
 	   Happy_GHC_Exts.Int# 
 	-> (T.Token L.AlexPosn)
-	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)
-	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)] 
+	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> (L.Alex) HappyAbsSyn)
+	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> (L.Alex) HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
-	-> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)
+	-> (L.Alex) HappyAbsSyn)
 
 happyReduce_1,
  happyReduce_2,
@@ -89,13 +89,13 @@ happyReduce_1,
  happyReduce_10,
  happyReduce_11,
  happyReduce_12,
- happyReduce_13 :: () => ({-HappyReduction (HappyIdentity) = -}
+ happyReduce_13 :: () => ({-HappyReduction (L.Alex) = -}
 	   Happy_GHC_Exts.Int# 
 	-> (T.Token L.AlexPosn)
-	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)
-	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)] 
+	-> HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> (L.Alex) HappyAbsSyn)
+	-> [HappyState (T.Token L.AlexPosn) (HappyStk HappyAbsSyn -> (L.Alex) HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
-	-> [(T.Token L.AlexPosn)] -> (HappyIdentity) HappyAbsSyn)
+	-> (L.Alex) HappyAbsSyn)
 
 happyExpList :: HappyAddr
 happyExpList = HappyA# "\x60\x2e\x01\x02\x00\x00\x02\x00\x00\x00\x00\xf0\x00\xe0\x12\x00\x00\x00\x00\x00\x00\x00\x00\xe0\x12\x00\x2e\x01\x00\x2f\x00\x00\x00\x08\x0f\x00\x2e\x01\xe0\x12\x00\x2e\x01\xe0\x12\x00\x00\x04\xe0\x12\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x0c\x00\x2e\x01\x00\x00\x00\xf1\x00\x00\x0f\x00\x2e\x01\x00\x0f\x00\x00\x00"#
@@ -402,12 +402,21 @@ happyReduction_13 _
 	)
 happyReduction_13 _ _ _  = notHappyAtAll 
 
-happyNewToken action sts stk [] =
-	action 20# 20# notHappyAtAll (HappyState action) sts stk []
-
-happyNewToken action sts stk (tk:tks) =
-	let cont i = action i i tk (HappyState action) sts stk tks in
+happyNewToken :: () => (Happy_GHC_Exts.Int#
+                   -> Happy_GHC_Exts.Int#
+                   -> (T.Token L.AlexPosn)
+                   -> HappyState (T.Token L.AlexPosn) (t -> L.Alex a)
+                   -> [HappyState (T.Token L.AlexPosn) (t -> L.Alex a)]
+                   -> t
+                   -> L.Alex a)
+                 -> [HappyState (T.Token L.AlexPosn) (t -> L.Alex a)]
+                 -> t
+                 -> L.Alex a
+happyNewToken action sts stk
+	= L.alexMonadScan >>=(\tk -> 
+	let cont i = action i i tk (HappyState action) sts stk in
 	case tk of {
+	T.EOF _ -> action 20# 20# tk (HappyState action) sts stk;
 	T.Let _ -> cont 6#;
 	T.If _ -> cont 7#;
 	T.Then _ -> cont 8#;
@@ -422,44 +431,30 @@ happyNewToken action sts stk (tk:tks) =
 	T.LeftParen _ -> cont 17#;
 	T.RightParen _ -> cont 18#;
 	T.Assign _ -> cont 19#;
-	_ -> happyError' ((tk:tks), [])
-	}
+	_ -> happyError' (tk, [])
+	})
 
-happyError_ explist 20# tk tks = happyError' (tks, explist)
-happyError_ explist _ tk tks = happyError' ((tk:tks), explist)
+happyError_ explist 20# tk = happyError' (tk, explist)
+happyError_ explist _ tk = happyError' (tk, explist)
 
-newtype HappyIdentity a = HappyIdentity a
-happyIdentity = HappyIdentity
-happyRunIdentity (HappyIdentity a) = a
-
-instance Prelude.Functor HappyIdentity where
-    fmap f (HappyIdentity a) = HappyIdentity (f a)
-
-instance Applicative HappyIdentity where
-    pure  = HappyIdentity
-    (<*>) = ap
-instance Prelude.Monad HappyIdentity where
-    return = pure
-    (HappyIdentity p) >>= q = q p
-
-happyThen :: () => HappyIdentity a -> (a -> HappyIdentity b) -> HappyIdentity b
+happyThen :: () => L.Alex a -> (a -> L.Alex b) -> L.Alex b
 happyThen = (Prelude.>>=)
-happyReturn :: () => a -> HappyIdentity a
+happyReturn :: () => a -> L.Alex a
 happyReturn = (Prelude.return)
-happyThen1 m k tks = (Prelude.>>=) m (\a -> k a tks)
-happyReturn1 :: () => a -> b -> HappyIdentity a
-happyReturn1 = \a tks -> (Prelude.return) a
-happyError' :: () => ([(T.Token L.AlexPosn)], [Prelude.String]) -> HappyIdentity a
-happyError' = HappyIdentity Prelude.. (\(tokens, _) -> parseError tokens)
-parse tks = happyRunIdentity happySomeParser where
- happySomeParser = happyThen (happyParse action_0 tks) (\x -> case x of {HappyAbsSyn4 z -> happyReturn z; _other -> notHappyAtAll })
+happyThen1 :: () => L.Alex a -> (a -> L.Alex b) -> L.Alex b
+happyThen1 = happyThen
+happyReturn1 :: () => a -> L.Alex a
+happyReturn1 = happyReturn
+happyError' :: () => ((T.Token L.AlexPosn), [Prelude.String]) -> L.Alex a
+happyError' tk = (\(tokens, _) -> parseError tokens) tk
+parse = happySomeParser where
+ happySomeParser = happyThen (happyParse action_0) (\x -> case x of {HappyAbsSyn4 z -> happyReturn z; _other -> notHappyAtAll })
 
 happySeq = happyDontSeq
 
 
-parseError :: [T.Token L.AlexPosn] -> a
-parseError [] = error "parse error"
-parseError (t:_) = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
+parseError :: T.Token L.AlexPosn -> L.Alex a
+parseError t = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 

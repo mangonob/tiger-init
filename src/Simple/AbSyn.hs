@@ -13,10 +13,3 @@ data Expr
   | Minus Expr
   | If {predicate :: Expr, success :: Expr, failure :: Maybe Expr}
   deriving (Show, Eq)
-
-ccc :: IO Int
-ccc =
-  if 3 > 0
-    then do
-      return 42
-    else return 44

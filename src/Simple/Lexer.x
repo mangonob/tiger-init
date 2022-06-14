@@ -4,7 +4,7 @@ module Simple.Lexer where
 import Simple.Token
 }
 
-%wrapper "posn"
+%wrapper "monad"
 
 $digit  = [0-9]
 $alpha  = [a-zA-Z]
@@ -14,18 +14,29 @@ tokens :-
 
 $white+                 ;
 
-$digit+\.($digit*)?     { flip $ DoubleToken . read }
-$digit+                 { flip $ IntToken . read }
+$digit+\.($digit*)?     { token' $ DoubleToken . read }
+$digit+                 { token' $ IntToken . read }
 
-"let"                   { flip $ const Let }
-"if"                    { flip $ const If }
-"then"                  { flip $ const Then }
-"else"                  { flip $ const Else }
-"+"                     { flip $ const Plus }
-"-"                     { flip $ const Minus}
-"*"                     { flip $ const Mul }
-"/"                     { flip $ const Div }
-"="                     { flip $ const Assign}
-"("                     { flip $ const LeftParen }
-")"                     { flip $ const RightParen }
-@id                     { flip $ IdToken }
+"let"                   { token' $ const Let }
+"if"                    { token' $ const If }
+"then"                  { token' $ const Then }
+"else"                  { token' $ const Else }
+"+"                     { token' $ const Plus }
+"-"                     { token' $ const Minus}
+"*"                     { token' $ const Mul }
+"/"                     { token' $ const Div }
+"="                     { token' $ const Assign}
+"("                     { token' $ const LeftParen }
+")"                     { token' $ const RightParen }
+@id                     { token' $ IdToken }
+
+{
+alexEOF :: Alex (Token AlexPosn)
+alexEOF = do
+    input <- alexGetInput
+    let (p, _, _, _) = input
+    return (EOF p)
+
+token' :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
+token' f = token (\(pos, _, _, s) len -> f (take len s) pos)
+}

@@ -1,7 +1,7 @@
 {
 module Simple.Parser where
 
-import Control.Monad (liftM2)
+import Control.Monad (liftM2, (>>=))
 import Control.Monad.State (State, put, get)
 import Simple.AbSyn
 import Simple.Token (intValue, doubleValue, pos)
@@ -10,6 +10,8 @@ import qualified Simple.Token as T
 }
 
 %name parse
+%monad { L.Alex }
+%lexer { L.alexMonadScan >>= } { T.EOF _ }
 %tokentype { T.Token L.AlexPosn }
 %error { parseError }
 
@@ -72,7 +74,6 @@ Expr        : Expr '+' Expr         { liftM2 (+) $1 $3 }
             | '(' Expr ')'          { $2 }
 
 {
-parseError :: [T.Token L.AlexPosn] -> a
-parseError [] = error "parse error"
-parseError (t:_) = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
+parseError :: T.Token L.AlexPosn -> L.Alex a
+parseError t = error $ "parse error at token " ++ show t ++ " (" ++ show (pos t) ++ ")"
 }
