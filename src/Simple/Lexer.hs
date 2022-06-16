@@ -22,6 +22,7 @@ import GHC.Exts
 import GlaExts
 #endif
 #define ALEX_MONAD 1
+#define ALEX_MONAD_USER_STATE 1
 -- -----------------------------------------------------------------------------
 -- Alex wrapper code.
 --
@@ -537,6 +538,10 @@ alexEOF = do
 
 token' :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
 token' f = token (\(pos, _, _, s) len -> f (take len s) pos)
+
+data AlexUserState = AlexUserState deriving (Show)
+ 
+alexInitUserState = AlexUserState
 alex_action_1 = token' $ DoubleToken . read
 alex_action_2 = token' $ IntToken . read
 alex_action_3 = token' $ const Let

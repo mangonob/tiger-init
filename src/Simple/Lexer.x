@@ -4,7 +4,7 @@ module Simple.Lexer where
 import Simple.Token
 }
 
-%wrapper "monad"
+%wrapper "monadUserState"
 
 $digit  = [0-9]
 $alpha  = [a-zA-Z]
@@ -40,4 +40,8 @@ alexEOF = do
 
 token' :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
 token' f = token (\(pos, _, _, s) len -> f (take len s) pos)
+
+data AlexUserState = AlexUserState deriving (Show)
+ 
+alexInitUserState = AlexUserState
 }
