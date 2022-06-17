@@ -8,7 +8,7 @@ module Simple.Parser where
 import Control.Monad (liftM2, (>>=))
 import Control.Monad.State (State, put, get)
 import Simple.AbSyn
-import Simple.Token (intValue, doubleValue, pos)
+import Simple.Token (Token)
 import Simple.Lexer (Alex, AlexPosn, alexMonadScan, alexError)
 import qualified Simple.Token as T
 import qualified Data.Array as Happy_Data_Array
@@ -20,7 +20,7 @@ import Control.Monad (ap)
 -- parser produced by Happy Version 1.20.0
 
 data HappyAbsSyn 
-	= HappyTerminal (T.Token AlexPosn)
+	= HappyTerminal (Token AlexPosn)
 	| HappyErrorToken Prelude.Int
 	| HappyAbsSyn4 ([Expr])
 	| HappyAbsSyn6 (Expr)
@@ -33,9 +33,9 @@ data HappyAbsSyn
  - code-generator that can just substitute it.
 type HappyReduction m = 
 	   Happy_GHC_Exts.Int# 
-	-> (T.Token AlexPosn)
-	-> HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)
-	-> [HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)] 
+	-> (Token AlexPosn)
+	-> HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)
+	-> [HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> m HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
 	-> m HappyAbsSyn
 -}
@@ -74,9 +74,9 @@ action_0,
  action_31,
  action_32 :: () => Happy_GHC_Exts.Int# -> ({-HappyReduction (Alex) = -}
 	   Happy_GHC_Exts.Int# 
-	-> (T.Token AlexPosn)
-	-> HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)
-	-> [HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)] 
+	-> (Token AlexPosn)
+	-> HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)
+	-> [HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
 	-> (Alex) HappyAbsSyn)
 
@@ -97,9 +97,9 @@ happyReduce_1,
  happyReduce_15,
  happyReduce_16 :: () => ({-HappyReduction (Alex) = -}
 	   Happy_GHC_Exts.Int# 
-	-> (T.Token AlexPosn)
-	-> HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)
-	-> [HappyState (T.Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)] 
+	-> (Token AlexPosn)
+	-> HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)
+	-> [HappyState (Token AlexPosn) (HappyStk HappyAbsSyn -> (Alex) HappyAbsSyn)] 
 	-> HappyStk HappyAbsSyn 
 	-> (Alex) HappyAbsSyn)
 
@@ -458,12 +458,12 @@ happyReduction_16 _ _ _  = notHappyAtAll
 
 happyNewToken :: () => (Happy_GHC_Exts.Int#
                    -> Happy_GHC_Exts.Int#
-                   -> (T.Token AlexPosn)
-                   -> HappyState (T.Token AlexPosn) (t -> Alex a)
-                   -> [HappyState (T.Token AlexPosn) (t -> Alex a)]
+                   -> (Token AlexPosn)
+                   -> HappyState (Token AlexPosn) (t -> Alex a)
+                   -> [HappyState (Token AlexPosn) (t -> Alex a)]
                    -> t
                    -> Alex a)
-                 -> [HappyState (T.Token AlexPosn) (t -> Alex a)]
+                 -> [HappyState (Token AlexPosn) (t -> Alex a)]
                  -> t
                  -> Alex a
 happyNewToken action sts stk
@@ -500,7 +500,7 @@ happyThen1 :: () => Alex a -> (a -> Alex b) -> Alex b
 happyThen1 = happyThen
 happyReturn1 :: () => a -> Alex a
 happyReturn1 = happyReturn
-happyError' :: () => ((T.Token AlexPosn), [Prelude.String]) -> Alex a
+happyError' :: () => ((Token AlexPosn), [Prelude.String]) -> Alex a
 happyError' tk = (\(tokens, _) -> parseError tokens) tk
 parse = happySomeParser where
  happySomeParser = happyThen (happyParse action_0) (\x -> case x of {HappyAbsSyn4 z -> happyReturn z; _other -> notHappyAtAll })
@@ -508,7 +508,7 @@ parse = happySomeParser where
 happySeq = happyDontSeq
 
 
-parseError :: T.Token AlexPosn -> Alex a
+parseError :: Token AlexPosn -> Alex a
 parseError t = alexError $ "parse error at token " ++ show t
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
