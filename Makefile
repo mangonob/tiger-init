@@ -1,19 +1,24 @@
+dest = src/RegExp
+
 all: lexer parser
 	stack build
-	stack ghci src/Simple/Main.hs
+	$(MAKE) repl
 
-lexer: src/Simple/Lexer.hs
+lexer: $(dest)/Lexer.hs
 
-parser: src/Simple/Parser.hs
+parser: $(dest)/Parser.hs
 
-src/Simple/Lexer.hs: src/Simple/Lexer.x
-	alex -gi src/Simple/Lexer.x
+repl:
+	stack ghci $(dest)/Main.hs
 
-src/Simple/Parser.hs: src/Simple/Parser.y
-	happy -gi src/Simple/Parser.y
+$(dest)/Lexer.hs: $(dest)/Lexer.x
+	alex -gi $(dest)/Lexer.x
+
+$(dest)/Parser.hs: $(dest)/Parser.y
+	happy -gi $(dest)/Parser.y
 
 clean:
-	-rm src/Simple/Lexer.hs
-	-rm src/Simple/Lexer.info
-	-rm src/Simple/Parser.hs
-	-rm src/Simple/Parser.info
+	-rm $(dest)/Lexer.hs
+	-rm $(dest)/Lexer.info
+	-rm $(dest)/Parser.hs
+	-rm $(dest)/Parser.info

@@ -33,6 +33,9 @@ library
       Parser_
       Production
       Raw
+      RegExp.Lexer
+      RegExp.Main
+      RegExp.Token
       Semantic.Env
       Semantic.FindEscape
       Semantic.Frame
