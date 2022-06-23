@@ -12,10 +12,11 @@ data Token p
   | Question {pos :: p}
   | Channel {pos :: p}
   | Caret {pos :: p}
+  | Slash {pos :: p}
   | Comma {pos :: p}
   | Dollar {pos :: p}
+  | Star {pos :: p}
   | Char {charValue :: Char, pos :: p}
-  | Unicode {value :: Int, pos :: p}
-  | Count {value :: Int, pos :: p}
+  | Int {intValue :: Int, pos :: p}
   | EOF {pos :: p}
   deriving (Eq, Show)

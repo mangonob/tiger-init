@@ -1,12 +1,18 @@
 module RegExp.Main where
 
-import RegExp.Lexer
+import Control.Monad.State (runState)
+import RegExp.AbSyn (RegExp (Group))
+import RegExp.Lexer (Alex, runAlex)
+import RegExp.Parser (parse)
 import Utils (readWithPrompt)
 
 main :: IO ()
 main = do
-  maybeContents <- readWithPrompt "regexp: "
+  maybeContents <- readWithPrompt "eval> "
   case maybeContents of
-    Just contents -> print $ runAlex contents alexMonadScan
     Nothing -> return ()
-  main
+    Just contents -> do
+      case runAlex contents parse of
+        Left msg -> print msg
+        Right exp -> print exp
+      main

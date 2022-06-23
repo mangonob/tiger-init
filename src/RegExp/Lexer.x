@@ -1,6 +1,9 @@
 {
 module RegExp.Lexer where
 
+import Data.Char
+import Numeric
+import Prelude hiding (repeat)
 import RegExp.Token
 }
 
@@ -13,25 +16,28 @@ tokens :-
 
 "("                     { token' (const ParenLeft) }
 ")"                     { token' $ const ParenRight }
-"["                     { token' $ const BracketLeft }
-"]"                     { token' $ const BracketRight }
-"{"                     { token' $ const BraceLeft }
-"}"                     { token' $ const BraceRight }
-"-"                     { token' $ const Minus }
+"["                     { token' (const BracketLeft) `andBegin` charset }
+<charset> "]"           { token' (const BracketRight) `andBegin` 0 }
+"{"                     { token' (const BraceLeft) `andBegin` repeat }
+<repeat> "}"            { token' (const BraceRight) `andBegin` 0 }
+<charset> "-"           { token' $ const Minus }
 "+"                     { token' $ const Plus }
 "?"                     { token' $ const Question }
 "|"                     { token' $ const Channel }
-"^"                     { token' $ const Caret }
+<charset> "^"           { token' $ const Caret }
 ","                     { token' $ const Comma }
+"^"                     { token' $ const Caret }
 "$"                     { token' $ const Dollar }
+"/"                     { token' $ const Slash }
+"*"                     { token' $ const Star }
 "\u{"                   { begin unicode }
 <unicode> "}"           { begin 0 }
-<unicode> $hex+         { token' $ Unicode . read }
+<unicode> $hex+         { token' $ Char . hexToChar }
 "\u"                    { begin sunicode}
-<sunicode> $hex+        { token' (Unicode . read) `andBegin` 0 }
+<sunicode> $hex+        { token' (Char . hexToChar) `andBegin` 0 }
 <escape> .              { token' (Char . read . (\s -> "'\\" ++ s ++ "'")) `andBegin` 0 }
 \\                      { begin escape }
--- TODO Count
+<repeat> $digit+        { token' $ Int . read }
 .                       { token' $ Char . head }
 
 
@@ -46,4 +52,7 @@ token' :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn
 token' f = token (\(pos, _, _, s) len -> f (take len s) pos)
 
 data AlexUserState = AlexUserState deriving (Show)
+
+hexToChar :: String -> Char
+hexToChar = chr . fst . head . readHex
 }

@@ -33,8 +33,10 @@ library
       Parser_
       Production
       Raw
+      RegExp.AbSyn
       RegExp.Lexer
       RegExp.Main
+      RegExp.Parser
       RegExp.Token
       Semantic.Env
       Semantic.FindEscape

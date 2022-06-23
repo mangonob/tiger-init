@@ -7,7 +7,7 @@ import Utils (readWithPrompt)
 
 main :: IO ()
 main = do
-  maybeContents <- readWithPrompt "eval>"
+  maybeContents <- readWithPrompt "eval> "
   case maybeContents of
     Nothing -> return ()
     Just contents -> do

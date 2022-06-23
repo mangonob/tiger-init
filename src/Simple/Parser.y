@@ -47,7 +47,7 @@ Prog        : {- empty -}           { [] }
 
 Seq :: { [Expr] }
 Seq         : Expr                  { [$1] }
-            | Seq ';' Expr          { $3 : $1}
+            | Seq ';' Expr          { $3 : $1 }
 
 Expr :: { Expr }
 Expr        : Expr '+' Expr         { Add $1 $3 }
