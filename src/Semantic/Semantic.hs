@@ -11,9 +11,8 @@ import Control.Monad.State.Strict
 import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List
-import Lexer (Pos (Pos))
-import Lexer_ (lexer)
-import Parser_ (parser)
+import Lexer (lexer)
+import Parser (parser)
 import Semantic.Env
 import Semantic.STable (STable)
 import qualified Semantic.Types as T

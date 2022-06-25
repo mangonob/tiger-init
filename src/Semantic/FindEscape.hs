@@ -6,8 +6,8 @@ import Control.Monad.State.Strict
 import Data.Functor ((<&>))
 import Data.Set
 import qualified Data.Set as S
-import Lexer_ (lexer)
-import Parser_ (parser)
+import Lexer (lexer)
+import Parser (parser)
 import Raw (raw)
 import Symbol (Sym)
 

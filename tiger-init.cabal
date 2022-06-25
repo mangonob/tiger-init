@@ -27,17 +27,10 @@ library
   exposed-modules:
       AbSyn
       Lexer
-      Lexer_
       Lib
       Parser
-      Parser_
       Production
       Raw
-      RegExp.AbSyn
-      RegExp.Lexer
-      RegExp.Main
-      RegExp.Parser
-      RegExp.Token
       Semantic.Env
       Semantic.FindEscape
       Semantic.Frame
@@ -48,11 +41,6 @@ library
       Semantic.Translate
       Semantic.Tree
       Semantic.Types
-      Simple.AbSyn
-      Simple.Lexer
-      Simple.Main
-      Simple.Parser
-      Simple.Token
       Symbol
       Token
       Utils

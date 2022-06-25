@@ -1,7 +1,7 @@
 module Main where
 
-import Lexer_ (lexer)
-import Parser_ (parser)
+import Lexer
+import Parser (parser)
 import Raw (raw)
 import System.Environment (getArgs)
 

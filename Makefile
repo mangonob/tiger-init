@@ -1,4 +1,4 @@
-dest = src/RegExp
+dest = src
 
 all: lexer parser
 	stack build
