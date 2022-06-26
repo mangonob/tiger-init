@@ -2,6 +2,10 @@ dest = src
 
 all: lexer parser
 	stack build
+	stack install
+
+run: lexer parser
+	stack build
 	$(MAKE) repl
 
 lexer: $(dest)/Lexer.hs

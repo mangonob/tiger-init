@@ -83,25 +83,25 @@ zero = IntExpr 0 (AlexPn 0 0 0)
 one :: Expr
 one = IntExpr 1 (AlexPn 0 0 0)
 
-exprAlexPosn :: Expr -> AlexPosn
-exprAlexPosn (VarExpr v) = varAlexPosn v
-exprAlexPosn (NilExpr p) = p
-exprAlexPosn (SeqExpr _ p) = p
-exprAlexPosn (IntExpr _ p) = p
-exprAlexPosn (StringExpr _ p) = p
-exprAlexPosn (UMinus _ p) = p
-exprAlexPosn Call {call_pos = p} = p
-exprAlexPosn (OpExpr _ _ _ p) = p
-exprAlexPosn RecordsExpr {records_pos = p} = p
-exprAlexPosn ArrayExpr {array_pos = p} = p
-exprAlexPosn (AssignExpr _ _ p) = p
-exprAlexPosn IFExpr {if_pos = p} = p
-exprAlexPosn WhileExpr {while_pos = p} = p
-exprAlexPosn ForExpr {for_pos = p} = p
-exprAlexPosn (BreakExpr p) = p
-exprAlexPosn LetExpr {let_pos = p} = p
+exprPos :: Expr -> AlexPosn
+exprPos (VarExpr v) = varPos v
+exprPos (NilExpr p) = p
+exprPos (SeqExpr _ p) = p
+exprPos (IntExpr _ p) = p
+exprPos (StringExpr _ p) = p
+exprPos (UMinus _ p) = p
+exprPos Call {call_pos = p} = p
+exprPos (OpExpr _ _ _ p) = p
+exprPos RecordsExpr {records_pos = p} = p
+exprPos ArrayExpr {array_pos = p} = p
+exprPos (AssignExpr _ _ p) = p
+exprPos IFExpr {if_pos = p} = p
+exprPos WhileExpr {while_pos = p} = p
+exprPos ForExpr {for_pos = p} = p
+exprPos (BreakExpr p) = p
+exprPos LetExpr {let_pos = p} = p
 
-varAlexPosn :: Var -> AlexPosn
-varAlexPosn (SimpleVar _ p) = p
-varAlexPosn (FieldVar _ _ p) = p
-varAlexPosn (IndexedVar _ _ p) = p
+varPos :: Var -> AlexPosn
+varPos (SimpleVar _ p) = p
+varPos (FieldVar _ _ p) = p
+varPos (IndexedVar _ _ p) = p

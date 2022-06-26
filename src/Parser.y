@@ -2,8 +2,8 @@
 module Parser where
 
 import AbSyn
-import Lexer (AlexPosn, Alex, alexMonadScan, alexError)
-import Token (Token)
+import Lexer (AlexPosn(..), Alex, alexMonadScan, alexError, alexGetInput)
+import Token (Token, pos, intValue, idValue, stringValue)
 import qualified Token as T
 }
 
@@ -14,6 +14,7 @@ import qualified Token as T
 %error { parseError }
 
 %token
+
 while                   { T.While _ }
 for                     { T.For _ }
 to                      { T.To _ }
@@ -54,11 +55,10 @@ nil                     { T.Nil _ }
 '&'                     { T.And _ }
 '|'                     { T.Or _ }
 ':='                    { T.Assign _ }
-string                  { T.String $$ _ }
-int                     { T.Int $$ _ }
-id                      { T.ID $$ _ }
+string                  { T.String _ _ }
+int                     { T.Int _ _ }
+id                      { T.ID _ _ }
 
-%nonassoc POSN
 %nonassoc do of
 %nonassoc else
 %nonassoc ':='
@@ -66,57 +66,58 @@ id                      { T.ID $$ _ }
 %nonassoc '>' '>=' '<' '<=' '<>' '='
 %left '+' '-'
 %left '*' '/'
+%left '[' '{'
 %left UMINUS
 
 %%
 
 expr :: { Expr }
-expr        : int                                   { IntExpr $1 (pos $1) }
-            | string                                { StringExpr $1 (pos $1) }
-            | nil                                   { NilExpr (pos $1) }
+expr        : int                                   { IntExpr (intValue $1) @ $1 }
+            | string                                { StringExpr (stringValue $1) @ $1 }
+            | nil                                   { NilExpr @ $1 }
             | lvalue                                { VarExpr $1 }
-            | lvalue ':=' expr                      { AssignExpr $1 $3 (pos $2) }
-            | '(' ')'                               { SeqExpr [] (pos $2)}
-            | '(' expr_seq ')'                      { SeqExpr $2 (pos $3)}
-            | '-' expr %prec UMINUS                 { UMinus $2 (pos $1)}
-            | id '(' ')'                            { Call $1 [] (pos $1) }
-            | id '(' params ')'                     { Call $1 $3 (pos $1) }
-            | expr '+' expr                         { OpExpr $1 PlusOp $3 (pos $2) }
-            | expr '-' expr                         { OpExpr $1 MinusOp $3 (pos $2) }
-            | expr '*' expr                         { OpExpr $1 TimesOp $3 (pos $2) }
-            | expr '/' expr                         { OpExpr $1 DivideOp $3 (pos $2) }
-            | expr '=' expr                         { OpExpr $1 EqOp $3 (pos $2) }
-            | expr '<>' expr                        { OpExpr $1 NeqOp $3 (pos $2) }
-            | expr '<' expr                         { OpExpr $1 LtOp $3 (pos $2) }
-            | expr '<=' expr                        { OpExpr $1 LeOp $3 (pos $2) }
-            | expr '>' expr                         { OpExpr $1 GtOp $3 (pos $2) }
-            | expr '>=' expr                        { OpExpr $1 GeOp $3 (pos $2) }
-            | expr '&' expr                         { IFExpr $1 $3 (Just zero) (pos $2) }
-            | expr '|' expr                         { IFExpr $1 one (Just $3) (pos $2) }
-            | id '{' '}'                            { RecordsExpr $1 [] (pos $1) }
-            | id '{' records '}'                    { RecordsExpr $1 $3 (pos $1) }
-            | id '[' expr ']' of expr               { ArrayExpr $1 $3 $6 (pos $1) }
-            | if expr then expr %prec do            { IFExpr $2 $4 Nothing (pos $1) }
-            | if expr then expr else expr           { IFExpr $2 $4 (Just $6) (pos $1) }
-            | while expr do expr                    { WhileExpr $2 $4 (pos $1) }
-            | for id ':=' expr to expr do expr      { ForExpr $2 $4 $6 $8 False (pos $1)}
-            | break                                 { BreakExpr (pos $1) }
-            | let decs in end                       { LetExpr $2 (SeqExpr [] (pos $4)) (pos $1) }
-            | let decs in expr_seq end              { LetExpr $2 (SeqExpr $4 (pos $5)) (pos $1) }
+            | lvalue ':=' expr                      { AssignExpr $1 $3 @ $2 }
+            | '(' ')'                               { SeqExpr [] @ $1 }
+            | '(' expr_seq ')'                      { SeqExpr $2 @ $1 }
+            | '-' expr %prec UMINUS                 { UMinus $2 @ $1 }
+            | id '(' ')'                            { Call (idValue $1) [] @ $2 }
+            | id '(' params ')'                     { Call (idValue $1) $3 @ $2 }
+            | expr '+' expr                         { OpExpr $1 PlusOp $3 @ $2 }
+            | expr '-' expr                         { OpExpr $1 MinusOp $3 @ $2 }
+            | expr '*' expr                         { OpExpr $1 TimesOp $3 @ $2 }
+            | expr '/' expr                         { OpExpr $1 DivideOp $3 @ $2 }
+            | expr '=' expr                         { OpExpr $1 EqOp $3 @ $2 }
+            | expr '<>' expr                        { OpExpr $1 NeqOp $3 @ $2 }
+            | expr '<' expr                         { OpExpr $1 LtOp $3 @ $2 }
+            | expr '<=' expr                        { OpExpr $1 LeOp $3 @ $2 }
+            | expr '>' expr                         { OpExpr $1 GtOp $3 @ $2 }
+            | expr '>=' expr                        { OpExpr $1 GeOp $3 @ $2 }
+            | expr '&' expr                         { IFExpr $1 $3 (Just zero) @ $2 }
+            | expr '|' expr                         { IFExpr $1 one (Just $3) @ $2 }
+            | id '{' '}'                            { RecordsExpr (idValue $1) [] @ $1 }
+            | id '{' records '}'                    { RecordsExpr (idValue $1) $3 @ $1 }
+            | id '[' expr ']' of expr               { ArrayExpr (idValue $1) $3 $6 @ $1 }
+            | if expr then expr %prec do            { IFExpr $2 $4 Nothing @ $1 }
+            | if expr then expr else expr           { IFExpr $2 $4 (Just $6) @ $1 }
+            | while expr do expr                    { WhileExpr $2 $4 @ $1 }
+            | for id ':=' expr to expr do expr      { ForExpr (idValue $2) $4 $6 $8 False @ $1 }
+            | break                                 { BreakExpr @ $1 }
+            | let decs in end                       { LetExpr $2 (SeqExpr [] @ $4) @ $1 }
+            | let decs in expr_seq end              { LetExpr $2 (SeqExpr $4 @ $5) @ $1 }
 
 lvalue :: { Var }
-lvalue      : id            { simpleVar $1 }
-            | lvalue_       { $1 }
+lvalue      : id                                    { simpleVar $1 }
+            | lvalue2                               { $1 }
 
-lvalue_ :: { Var }
-lvalue_     : id '.' id                             { FieldVar $1 $3 (pos $2) }
-            | id '[' expr ']'                       { IndexedVar $1 $3 (pos $2)} 
-            | lvalue_ '.' id                        { FieldVar $1 $3 (pos $2) }
-            | lvalue_ '[' expr ']'                  { IndexedVar $1 $3 (pos $2) }
+lvalue2 :: { Var }
+lvalue2     : id '.' id                             { FieldVar (simpleVar $1) (idValue $3) @ $2 }
+            | id '[' expr ']'                       { IndexedVar (simpleVar $1) $3 @ $2 }
+            | lvalue2 '.' id                        { FieldVar $1 (idValue $3) @ $2 }
+            | lvalue2 '[' expr ']'                  { IndexedVar $1 $3 @ $2 }
 
 expr_seq :: { [Expr] }
 expr_seq    : expr                                  { [$1] }
-            | expr_seq ';' expr                     { $1 ++ [$3]}
+            | expr_seq ';' expr                     { $1 ++ [$3] }
 
 params :: { [Expr] }
 params      : expr                                  { [$1] }
@@ -127,39 +128,44 @@ records     : field                                 { [$1] }
             | records ',' field                     { $1 ++ [$3] }
 
 field :: { Field }
-field       : id '=' expr                           { Field $1 $3 (pos $1) }
+field       : id '=' expr                           { Field (idValue $1) $3 @ $1 }
 
 decs :: { [Dec] }
 decs        : {- empty -}                           { [] }
             | decs dec                              { $1 ++ [$2] }
 
 dec :: { Dec }
-dec         : type id '=' ty                        { TypeDec $2 $4 (pos $1)}
-            | var id ':=' expr                      { VarDec $2 $4 Nothing False (pos $1)}
-            | var id ':' id ':=' expr               { VarDec $2 $6 (Just $4) False (pos $1)}
-            | function id '(' ty_fields ')' '=' expr    { FuncDec $2 $4 Nothing $7 (pos $1)} 
-            | function id '(' ty_fields ')' ':' id '=' expr    { FuncDec $2 $4 (Just $7) $9 (pos $1)}
+dec         : type id '=' ty                        { TypeDec (idValue $2) $4 @ $1 }
+            | var id ':=' expr                      { VarDec (idValue $2) $4 Nothing False @ $1 }
+            | var id ':' id ':=' expr               { VarDec (idValue $2) $6 (Just (idValue $4)) False @ $1 }
+            | function id '(' ty_fields ')' '=' expr   
+                                                    { FuncDec (idValue $2) $4 Nothing $7 @ $1 } 
+            | function id '(' ty_fields ')' ':' id '=' expr    
+                                                    { FuncDec (idValue $2) $4 (Just (idValue $7)) $9 @ $1 }
 
 ty :: { Type }
-ty          : id                                    { SimpleType $1 (pos $1) }
-            | '{' ty_fields '}'                     { Records $2 (pos $1) }
-            | array of id                           { Array $3 (pos $1) }
+ty          : id                                    { SimpleType (idValue $1) @ $1 }
+            | '{' ty_fields '}'                     { Records $2 @ $1 }
+            | array of id                           { Array (idValue $3) @ $1 }
 
 ty_fields :: { [Record] }
 ty_fields   : {- empty -}                           { [] }
-            | ty_fields_                            { $1 }
+            | ty_fields1                            { $1 }
 
-ty_fields_ :: { [Record] }
-ty_fields_  : ty_field                              { [$1] }
-            | ty_fields_ ',' ty_field               { $1 ++ [$3] }
+ty_fields1 :: { [Record] }
+ty_fields1  : ty_field                              { [$1] }
+            | ty_fields1 ',' ty_field               { $1 ++ [$3] }
 
 ty_field :: { Record }
-ty_field    : id ':' id                             { Record $1 $3 False (pos $1) }
+ty_field    : id ':' id                             { Record (idValue $1) (idValue $3) False @ $1 }
 
 {
 parseError :: Token AlexPosn -> Alex a
 parseError t = alexError $ "parse error at token " ++ show t
 
 simpleVar :: Token AlexPosn -> Var
-simpleVar t = SimpleVar t (pos t)
+simpleVar t = SimpleVar (idValue t) (pos t)
+
+(@) :: (AlexPosn -> a) -> Token AlexPosn -> a
+f @ t = f (pos t)
 }

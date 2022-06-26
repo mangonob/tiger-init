@@ -5,8 +5,17 @@ import Control.Monad.RWS (MonadState (put))
 import Control.Monad.State.Strict
 import Data.Functor ((<&>))
 import Data.Set
+  ( Set,
+    delete,
+    empty,
+    fromList,
+    member,
+    singleton,
+    union,
+    (\\),
+  )
 import qualified Data.Set as S
-import Lexer (lexer)
+import Lexer (runAlex)
 import Parser (parser)
 import Raw (raw)
 import Symbol (Sym)
@@ -122,10 +131,13 @@ _fatalError :: S a
 _fatalError = get >>= error . show
 
 main = do
-  contents <- readFile "src/Compiler/Tiger/source/ESCAPE_TEST.TIG"
-  let (value, state) = runState (findEscape $ parser $ lexer contents) (empty, empty)
-  putStrLn "Result: "
-  putStrLn $ raw value
-  putStrLn ""
-  putStrLn "State: "
-  print state
+  contents <- readFile "src/source/ESCAPE_TEST.TIG"
+  case runAlex contents parser of
+    Left msg -> putStrLn msg
+    Right expr -> do
+      let (value, state) = runState (findEscape expr) (empty, empty)
+      putStrLn "Result: "
+      putStrLn $ raw value
+      putStrLn ""
+      putStrLn "State: "
+      print state

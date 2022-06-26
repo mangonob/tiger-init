@@ -11,19 +11,18 @@ import Control.Monad.State.Strict
 import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List
-import Lexer (lexer)
+import Lexer (AlexPosn, runAlex)
 import Parser (parser)
 import Semantic.Env
 import Semantic.STable (STable)
 import qualified Semantic.Types as T
 import Symbol
-import Token (Pos)
 
 data Exp = Exp deriving (Show)
 
 data ExpTy = ExpTy (Maybe Exp) T.Type deriving (Show)
 
-checkType :: T.Type -> T.Type -> Pos -> State Env Bool
+checkType :: T.Type -> T.Type -> AlexPosn -> State Env Bool
 checkType t1 t2 p = do
   actualTy1 <- actualType t1 p
   actualTy2 <- actualType t2 p
@@ -36,7 +35,7 @@ checkType t1 t2 p = do
       | otherwise = error $ "type " ++ show t1 ++ " is not match with " ++ show t2 ++ " at position " ++ show p
 
 --- Find actual Type of symbol
-findType :: Sym -> Pos -> State Env T.Type
+findType :: Sym -> AlexPosn -> State Env T.Type
 findType name pos = do
   maybeEntry <- getTenv name
   case maybeEntry of
@@ -248,7 +247,7 @@ transDecHead dec = case dec of
   where
     recordNamedType r = T.NamedType (record_type r) Nothing
 
-actualType :: T.Type -> Pos -> State Env T.Type
+actualType :: T.Type -> AlexPosn -> State Env T.Type
 actualType (T.NamedType name Nothing) p = do
   maybeTy <- getTenv name
   case maybeTy of
@@ -344,17 +343,15 @@ transType (Array elemName p) = do
 _fatalCurrentEnv :: State Env a
 _fatalCurrentEnv = get >>= error . show
 
-_eval :: String -> ExpTy
-_eval source = transExpr (parser $ lexer source) `evalState` baseEnv
-
-_run :: String -> (ExpTy, Env)
-_run source = transExpr (parser $ lexer source) `runState` baseEnv
-
+main :: IO ()
 main = do
-  contents <- readFile "src/Compiler/Tiger/source/MERGE.TIG"
-  let (value, state) = runState (transExpr $ parser $ lexer contents) baseEnv
-  putStrLn "Result: "
-  print value
-  putStrLn ""
-  putStrLn "Env: "
-  print state
+  contents <- readFile "src/source/MERGE.TIG"
+  case runAlex contents parser of
+    Left msg -> putStrLn msg
+    Right expr -> do
+      let (value, state) = runState (transExpr expr) baseEnv
+      putStrLn "Result: "
+      print value
+      putStrLn ""
+      putStrLn "Env: "
+      print state

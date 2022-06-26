@@ -1,6 +1,6 @@
 module Main where
 
-import Lexer
+import Lexer (runAlex)
 import Parser (parser)
 import Raw (raw)
 import System.Environment (getArgs)
@@ -11,10 +11,14 @@ main = do
   case args of
     ("-r" : filename : _) -> do
       contents <- readFile filename
-      putStrLn $ raw . parser $ lexer contents
+      case runAlex contents parser of
+        Left msg -> putStrLn msg
+        Right expr -> putStrLn (raw expr)
     (filename : _) -> do
       contents <- readFile filename
-      print $ lexer contents
+      case runAlex contents parser of
+        Left msg -> putStrLn msg
+        Right expr -> print expr
     _ ->
       putStrLn $
         unlines

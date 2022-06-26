@@ -6,8 +6,8 @@
 module Parser where
 
 import AbSyn
-import Lexer (AlexPosn, Alex, alexMonadScan, alexError)
-import Token (Token, pos)
+import Lexer (AlexPosn(..), Alex, alexMonadScan, alexError, alexGetInput)
+import Token (Token, pos, intValue, idValue, stringValue)
 import qualified Token as T
 import qualified Data.Array as Happy_Data_Array
 import qualified Data.Bits as Bits
@@ -262,7 +262,7 @@ happyExpList = HappyA# "\x00\x00\x1b\x08\x11\x10\x00\x07\x00\x00\x00\x00\x00\x00
 {-# NOINLINE happyExpListPerState #-}
 happyExpListPerState st =
     token_strs_expected
-  where token_strs = ["error","%dummy","%start_parser","expr","lvalue","lvalue_","expr_seq","params","records","field","decs","dec","ty","ty_fields","ty_fields_","ty_field","while","for","to","break","let","in","end","function","var","type","array","if","then","else","do","of","nil","','","':'","';'","'('","')'","'['","']'","'{'","'}'","'.'","'+'","'-'","'*'","'/'","'='","'<>'","'<'","'<='","'>'","'>='","'&'","'|'","':='","string","int","id","%eof"]
+  where token_strs = ["error","%dummy","%start_parser","expr","lvalue","lvalue2","expr_seq","params","records","field","decs","dec","ty","ty_fields","ty_fields1","ty_field","while","for","to","break","let","in","end","function","var","type","array","if","then","else","do","of","nil","','","':'","';'","'('","')'","'['","']'","'{'","'}'","'.'","'+'","'-'","'*'","'/'","'='","'<>'","'<'","'<='","'>'","'>='","'&'","'|'","':='","string","int","id","%eof"]
         bit_start = st Prelude.* 60
         bit_end = (st Prelude.+ 1) Prelude.* 60
         read_bit = readArrayBit happyExpList
@@ -1479,23 +1479,23 @@ action_135 (55#) = happyShift action_42
 action_135 x = happyTcHack x happyReduce_52
 
 happyReduce_1 = happySpecReduce_1  4# happyReduction_1
-happyReduction_1 (HappyTerminal (T.Int happy_var_1 _))
+happyReduction_1 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (IntExpr happy_var_1 (pos happy_var_1)
+		 (IntExpr (intValue happy_var_1) @ happy_var_1
 	)
 happyReduction_1 _  = notHappyAtAll 
 
 happyReduce_2 = happySpecReduce_1  4# happyReduction_2
-happyReduction_2 (HappyTerminal (T.String happy_var_1 _))
+happyReduction_2 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (StringExpr happy_var_1 (pos happy_var_1)
+		 (StringExpr (stringValue happy_var_1) @ happy_var_1
 	)
 happyReduction_2 _  = notHappyAtAll 
 
 happyReduce_3 = happySpecReduce_1  4# happyReduction_3
 happyReduction_3 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (NilExpr (pos happy_var_1)
+		 (NilExpr @ happy_var_1
 	)
 happyReduction_3 _  = notHappyAtAll 
 
@@ -1511,24 +1511,24 @@ happyReduction_5 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn5  happy_var_1)
 	 =  HappyAbsSyn4
-		 (AssignExpr happy_var_1 happy_var_3 (pos happy_var_2)
+		 (AssignExpr happy_var_1 happy_var_3 @ happy_var_2
 	)
 happyReduction_5 _ _ _  = notHappyAtAll 
 
 happyReduce_6 = happySpecReduce_2  4# happyReduction_6
-happyReduction_6 (HappyTerminal happy_var_2)
-	_
+happyReduction_6 _
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (SeqExpr [] (pos happy_var_2)
+		 (SeqExpr [] @ happy_var_1
 	)
 happyReduction_6 _ _  = notHappyAtAll 
 
 happyReduce_7 = happySpecReduce_3  4# happyReduction_7
-happyReduction_7 (HappyTerminal happy_var_3)
+happyReduction_7 _
 	(HappyAbsSyn7  happy_var_2)
-	_
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (SeqExpr happy_var_2 (pos happy_var_3)
+		 (SeqExpr happy_var_2 @ happy_var_1
 	)
 happyReduction_7 _ _ _  = notHappyAtAll 
 
@@ -1536,27 +1536,27 @@ happyReduce_8 = happySpecReduce_2  4# happyReduction_8
 happyReduction_8 (HappyAbsSyn4  happy_var_2)
 	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (UMinus happy_var_2 (pos happy_var_1)
+		 (UMinus happy_var_2 @ happy_var_1
 	)
 happyReduction_8 _ _  = notHappyAtAll 
 
 happyReduce_9 = happySpecReduce_3  4# happyReduction_9
 happyReduction_9 _
-	_
-	(HappyTerminal (T.ID happy_var_1 _))
+	(HappyTerminal happy_var_2)
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (Call happy_var_1 [] (pos happy_var_1)
+		 (Call (idValue happy_var_1) [] @ happy_var_2
 	)
 happyReduction_9 _ _ _  = notHappyAtAll 
 
 happyReduce_10 = happyReduce 4# 4# happyReduction_10
 happyReduction_10 (_ `HappyStk`
 	(HappyAbsSyn7  happy_var_3) `HappyStk`
-	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_1 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
+	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (Call happy_var_1 happy_var_3 (pos happy_var_1)
+		 (Call (idValue happy_var_1) happy_var_3 @ happy_var_2
 	) `HappyStk` happyRest
 
 happyReduce_11 = happySpecReduce_3  4# happyReduction_11
@@ -1564,7 +1564,7 @@ happyReduction_11 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 PlusOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 PlusOp happy_var_3 @ happy_var_2
 	)
 happyReduction_11 _ _ _  = notHappyAtAll 
 
@@ -1573,7 +1573,7 @@ happyReduction_12 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 MinusOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 MinusOp happy_var_3 @ happy_var_2
 	)
 happyReduction_12 _ _ _  = notHappyAtAll 
 
@@ -1582,7 +1582,7 @@ happyReduction_13 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 TimesOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 TimesOp happy_var_3 @ happy_var_2
 	)
 happyReduction_13 _ _ _  = notHappyAtAll 
 
@@ -1591,7 +1591,7 @@ happyReduction_14 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 DivideOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 DivideOp happy_var_3 @ happy_var_2
 	)
 happyReduction_14 _ _ _  = notHappyAtAll 
 
@@ -1600,7 +1600,7 @@ happyReduction_15 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 EqOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 EqOp happy_var_3 @ happy_var_2
 	)
 happyReduction_15 _ _ _  = notHappyAtAll 
 
@@ -1609,7 +1609,7 @@ happyReduction_16 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 NeqOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 NeqOp happy_var_3 @ happy_var_2
 	)
 happyReduction_16 _ _ _  = notHappyAtAll 
 
@@ -1618,7 +1618,7 @@ happyReduction_17 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 LtOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 LtOp happy_var_3 @ happy_var_2
 	)
 happyReduction_17 _ _ _  = notHappyAtAll 
 
@@ -1627,7 +1627,7 @@ happyReduction_18 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 LeOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 LeOp happy_var_3 @ happy_var_2
 	)
 happyReduction_18 _ _ _  = notHappyAtAll 
 
@@ -1636,7 +1636,7 @@ happyReduction_19 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 GtOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 GtOp happy_var_3 @ happy_var_2
 	)
 happyReduction_19 _ _ _  = notHappyAtAll 
 
@@ -1645,7 +1645,7 @@ happyReduction_20 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (OpExpr happy_var_1 GeOp happy_var_3 (pos happy_var_2)
+		 (OpExpr happy_var_1 GeOp happy_var_3 @ happy_var_2
 	)
 happyReduction_20 _ _ _  = notHappyAtAll 
 
@@ -1654,7 +1654,7 @@ happyReduction_21 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (IFExpr happy_var_1 happy_var_3 (Just zero) (pos happy_var_2)
+		 (IFExpr happy_var_1 happy_var_3 (Just zero) @ happy_var_2
 	)
 happyReduction_21 _ _ _  = notHappyAtAll 
 
@@ -1663,16 +1663,16 @@ happyReduction_22 (HappyAbsSyn4  happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (IFExpr happy_var_1 one (Just happy_var_3) (pos happy_var_2)
+		 (IFExpr happy_var_1 one (Just happy_var_3) @ happy_var_2
 	)
 happyReduction_22 _ _ _  = notHappyAtAll 
 
 happyReduce_23 = happySpecReduce_3  4# happyReduction_23
 happyReduction_23 _
 	_
-	(HappyTerminal (T.ID happy_var_1 _))
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (RecordsExpr happy_var_1 [] (pos happy_var_1)
+		 (RecordsExpr (idValue happy_var_1) [] @ happy_var_1
 	)
 happyReduction_23 _ _ _  = notHappyAtAll 
 
@@ -1680,10 +1680,10 @@ happyReduce_24 = happyReduce 4# 4# happyReduction_24
 happyReduction_24 (_ `HappyStk`
 	(HappyAbsSyn9  happy_var_3) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_1 _)) `HappyStk`
+	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (RecordsExpr happy_var_1 happy_var_3 (pos happy_var_1)
+		 (RecordsExpr (idValue happy_var_1) happy_var_3 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_25 = happyReduce 6# 4# happyReduction_25
@@ -1692,10 +1692,10 @@ happyReduction_25 ((HappyAbsSyn4  happy_var_6) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn4  happy_var_3) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_1 _)) `HappyStk`
+	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (ArrayExpr happy_var_1 happy_var_3 happy_var_6 (pos happy_var_1)
+		 (ArrayExpr (idValue happy_var_1) happy_var_3 happy_var_6 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_26 = happyReduce 4# 4# happyReduction_26
@@ -1705,7 +1705,7 @@ happyReduction_26 ((HappyAbsSyn4  happy_var_4) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (IFExpr happy_var_2 happy_var_4 Nothing (pos happy_var_1)
+		 (IFExpr happy_var_2 happy_var_4 Nothing @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_27 = happyReduce 6# 4# happyReduction_27
@@ -1717,7 +1717,7 @@ happyReduction_27 ((HappyAbsSyn4  happy_var_6) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (IFExpr happy_var_2 happy_var_4 (Just happy_var_6) (pos happy_var_1)
+		 (IFExpr happy_var_2 happy_var_4 (Just happy_var_6) @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_28 = happyReduce 4# 4# happyReduction_28
@@ -1727,7 +1727,7 @@ happyReduction_28 ((HappyAbsSyn4  happy_var_4) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (WhileExpr happy_var_2 happy_var_4 (pos happy_var_1)
+		 (WhileExpr happy_var_2 happy_var_4 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_29 = happyReduce 8# 4# happyReduction_29
@@ -1737,17 +1737,17 @@ happyReduction_29 ((HappyAbsSyn4  happy_var_8) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn4  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (ForExpr happy_var_2 happy_var_4 happy_var_6 happy_var_8 False (pos happy_var_1)
+		 (ForExpr (idValue happy_var_2) happy_var_4 happy_var_6 happy_var_8 False @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_30 = happySpecReduce_1  4# happyReduction_30
 happyReduction_30 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn4
-		 (BreakExpr (pos happy_var_1)
+		 (BreakExpr @ happy_var_1
 	)
 happyReduction_30 _  = notHappyAtAll 
 
@@ -1758,7 +1758,7 @@ happyReduction_31 ((HappyTerminal happy_var_4) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (LetExpr happy_var_2 (SeqExpr [] (pos happy_var_4)) (pos happy_var_1)
+		 (LetExpr happy_var_2 (SeqExpr [] @ happy_var_4) @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_32 = happyReduce 5# 4# happyReduction_32
@@ -1769,11 +1769,11 @@ happyReduction_32 ((HappyTerminal happy_var_5) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn4
-		 (LetExpr happy_var_2 (SeqExpr happy_var_4 (pos happy_var_5)) (pos happy_var_1)
+		 (LetExpr happy_var_2 (SeqExpr happy_var_4 @ happy_var_5) @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_33 = happySpecReduce_1  5# happyReduction_33
-happyReduction_33 (HappyTerminal (T.ID happy_var_1 _))
+happyReduction_33 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn5
 		 (simpleVar happy_var_1
 	)
@@ -1787,11 +1787,11 @@ happyReduction_34 (HappyAbsSyn5  happy_var_1)
 happyReduction_34 _  = notHappyAtAll 
 
 happyReduce_35 = happySpecReduce_3  6# happyReduction_35
-happyReduction_35 (HappyTerminal (T.ID happy_var_3 _))
+happyReduction_35 (HappyTerminal happy_var_3)
 	(HappyTerminal happy_var_2)
-	(HappyTerminal (T.ID happy_var_1 _))
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn5
-		 (FieldVar happy_var_1 happy_var_3 (pos happy_var_2)
+		 (FieldVar (simpleVar happy_var_1) (idValue happy_var_3) @ happy_var_2
 	)
 happyReduction_35 _ _ _  = notHappyAtAll 
 
@@ -1799,18 +1799,18 @@ happyReduce_36 = happyReduce 4# 6# happyReduction_36
 happyReduction_36 (_ `HappyStk`
 	(HappyAbsSyn4  happy_var_3) `HappyStk`
 	(HappyTerminal happy_var_2) `HappyStk`
-	(HappyTerminal (T.ID happy_var_1 _)) `HappyStk`
+	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn5
-		 (IndexedVar happy_var_1 happy_var_3 (pos happy_var_2)
+		 (IndexedVar (simpleVar happy_var_1) happy_var_3 @ happy_var_2
 	) `HappyStk` happyRest
 
 happyReduce_37 = happySpecReduce_3  6# happyReduction_37
-happyReduction_37 (HappyTerminal (T.ID happy_var_3 _))
+happyReduction_37 (HappyTerminal happy_var_3)
 	(HappyTerminal happy_var_2)
 	(HappyAbsSyn5  happy_var_1)
 	 =  HappyAbsSyn5
-		 (FieldVar happy_var_1 happy_var_3 (pos happy_var_2)
+		 (FieldVar happy_var_1 (idValue happy_var_3) @ happy_var_2
 	)
 happyReduction_37 _ _ _  = notHappyAtAll 
 
@@ -1821,7 +1821,7 @@ happyReduction_38 (_ `HappyStk`
 	(HappyAbsSyn5  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn5
-		 (IndexedVar happy_var_1 happy_var_3 (pos happy_var_2)
+		 (IndexedVar happy_var_1 happy_var_3 @ happy_var_2
 	) `HappyStk` happyRest
 
 happyReduce_39 = happySpecReduce_1  7# happyReduction_39
@@ -1875,9 +1875,9 @@ happyReduction_44 _ _ _  = notHappyAtAll
 happyReduce_45 = happySpecReduce_3  10# happyReduction_45
 happyReduction_45 (HappyAbsSyn4  happy_var_3)
 	_
-	(HappyTerminal (T.ID happy_var_1 _))
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn10
-		 (Field happy_var_1 happy_var_3 (pos happy_var_1)
+		 (Field (idValue happy_var_1) happy_var_3 @ happy_var_1
 	)
 happyReduction_45 _ _ _  = notHappyAtAll 
 
@@ -1897,33 +1897,33 @@ happyReduction_47 _ _  = notHappyAtAll
 happyReduce_48 = happyReduce 4# 12# happyReduction_48
 happyReduction_48 ((HappyAbsSyn13  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn12
-		 (TypeDec happy_var_2 happy_var_4 (pos happy_var_1)
+		 (TypeDec (idValue happy_var_2) happy_var_4 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_49 = happyReduce 4# 12# happyReduction_49
 happyReduction_49 ((HappyAbsSyn4  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn12
-		 (VarDec happy_var_2 happy_var_4 Nothing False (pos happy_var_1)
+		 (VarDec (idValue happy_var_2) happy_var_4 Nothing False @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_50 = happyReduce 6# 12# happyReduction_50
 happyReduction_50 ((HappyAbsSyn4  happy_var_6) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_4 _)) `HappyStk`
+	(HappyTerminal happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn12
-		 (VarDec happy_var_2 happy_var_6 (Just happy_var_4) False (pos happy_var_1)
+		 (VarDec (idValue happy_var_2) happy_var_6 (Just (idValue happy_var_4)) False @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_51 = happyReduce 7# 12# happyReduction_51
@@ -1932,32 +1932,32 @@ happyReduction_51 ((HappyAbsSyn4  happy_var_7) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn14  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn12
-		 (FuncDec happy_var_2 happy_var_4 Nothing happy_var_7 (pos happy_var_1)
+		 (FuncDec (idValue happy_var_2) happy_var_4 Nothing happy_var_7 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_52 = happyReduce 9# 12# happyReduction_52
 happyReduction_52 ((HappyAbsSyn4  happy_var_9) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_7 _)) `HappyStk`
+	(HappyTerminal happy_var_7) `HappyStk`
 	_ `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn14  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (T.ID happy_var_2 _)) `HappyStk`
+	(HappyTerminal happy_var_2) `HappyStk`
 	(HappyTerminal happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn12
-		 (FuncDec happy_var_2 happy_var_4 (Just happy_var_7) happy_var_9 (pos happy_var_1)
+		 (FuncDec (idValue happy_var_2) happy_var_4 (Just (idValue happy_var_7)) happy_var_9 @ happy_var_1
 	) `HappyStk` happyRest
 
 happyReduce_53 = happySpecReduce_1  13# happyReduction_53
-happyReduction_53 (HappyTerminal (T.ID happy_var_1 _))
+happyReduction_53 (HappyTerminal happy_var_1)
 	 =  HappyAbsSyn13
-		 (SimpleType happy_var_1 (pos happy_var_1)
+		 (SimpleType (idValue happy_var_1) @ happy_var_1
 	)
 happyReduction_53 _  = notHappyAtAll 
 
@@ -1966,16 +1966,16 @@ happyReduction_54 _
 	(HappyAbsSyn14  happy_var_2)
 	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn13
-		 (Records happy_var_2 (pos happy_var_1)
+		 (Records happy_var_2 @ happy_var_1
 	)
 happyReduction_54 _ _ _  = notHappyAtAll 
 
 happyReduce_55 = happySpecReduce_3  13# happyReduction_55
-happyReduction_55 (HappyTerminal (T.ID happy_var_3 _))
+happyReduction_55 (HappyTerminal happy_var_3)
 	_
 	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn13
-		 (Array happy_var_3 (pos happy_var_1)
+		 (Array (idValue happy_var_3) @ happy_var_1
 	)
 happyReduction_55 _ _ _  = notHappyAtAll 
 
@@ -2008,11 +2008,11 @@ happyReduction_59 (HappyAbsSyn16  happy_var_3)
 happyReduction_59 _ _ _  = notHappyAtAll 
 
 happyReduce_60 = happySpecReduce_3  16# happyReduction_60
-happyReduction_60 (HappyTerminal (T.ID happy_var_3 _))
+happyReduction_60 (HappyTerminal happy_var_3)
 	_
-	(HappyTerminal (T.ID happy_var_1 _))
+	(HappyTerminal happy_var_1)
 	 =  HappyAbsSyn16
-		 (Record happy_var_1 happy_var_3 False (pos happy_var_1)
+		 (Record (idValue happy_var_1) (idValue happy_var_3) False @ happy_var_1
 	)
 happyReduction_60 _ _ _  = notHappyAtAll 
 
@@ -2071,9 +2071,9 @@ happyNewToken action sts stk
 	T.And _ -> cont 54#;
 	T.Or _ -> cont 55#;
 	T.Assign _ -> cont 56#;
-	T.String happy_dollar_dollar _ -> cont 57#;
-	T.Int happy_dollar_dollar _ -> cont 58#;
-	T.ID happy_dollar_dollar _ -> cont 59#;
+	T.String _ _ -> cont 57#;
+	T.Int _ _ -> cont 58#;
+	T.ID _ _ -> cont 59#;
 	_ -> happyError' (tk, [])
 	})
 
@@ -2100,7 +2100,10 @@ parseError :: Token AlexPosn -> Alex a
 parseError t = alexError $ "parse error at token " ++ show t
 
 simpleVar :: Token AlexPosn -> Var
-simpleVar t = SimpleVar t (pos t)
+simpleVar t = SimpleVar (idValue t) (pos t)
+
+(@) :: (AlexPosn -> a) -> Token AlexPosn -> a
+f @ t = f (pos t)
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
 -- $Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp $
 

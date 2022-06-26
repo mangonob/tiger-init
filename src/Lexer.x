@@ -13,9 +13,12 @@ $any    = [ . \n ]
 
 token :-
 
+<string> ( [^\"] | \\ \" ) *    { token' String }
+<string> \"                     { begin 0 }
+\"                              { begin string }
+
 $white+                         ;
 "//" .*                         ;
-
 "/*" ([$any # \*] | \* [$any # \/]) * "*/"                            
                                 ;
 
@@ -60,9 +63,6 @@ nil                             { token' $ const Nil }
 "&"                             { token' $ const And }
 "|"                             { token' $ const Or }
 ":="                            { token' $ const Assign }
-\"                              { begin string }
-<string> \"                     { begin 0 }
-<string> ( [^\"] | \\ \") *     { token' String }
 $digit+                         { token' $ Int . read }
 @id                             { token' $ ID }
 
