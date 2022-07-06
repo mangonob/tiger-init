@@ -14,7 +14,7 @@ $any    = [ . \n ]
 
 token :-
 
-<string> ( [^\"] | \\ \" ) *    { token' String }
+<string> ( [^\"] | \\ \" ) *    { from String }
 <string> \"                     { begin 0 }
 \"                              { begin string }
 
@@ -26,49 +26,49 @@ $white+                         ;
 <comment> ([$any # [\/\*]] | \* [$any # \/] | \/ [$any # \*]) *
                                 ;
 
-while                           { token' $ const While }
-for                             { token' $ const For }
-to                              { token' $ const To }
-break                           { token' $ const Break }
-let                             { token' $ const Let }
-in                              { token' $ const In }
-end                             { token' $ const End }
-function                        { token' $ const Function }
-var                             { token' $ const Var }
-type                            { token' $ const Type }
-array                           { token' $ const Array }
-if                              { token' $ const If }
-then                            { token' $ const Then }
-else                            { token' $ const Else }
-do                              { token' $ const Do }
-of                              { token' $ const Of }
-nil                             { token' $ const Nil }
+while                           { from $ const While }
+for                             { from $ const For }
+to                              { from $ const To }
+break                           { from $ const Break }
+let                             { from $ const Let }
+in                              { from $ const In }
+end                             { from $ const End }
+function                        { from $ const Function }
+var                             { from $ const Var }
+type                            { from $ const Type }
+array                           { from $ const Array }
+if                              { from $ const If }
+then                            { from $ const Then }
+else                            { from $ const Else }
+do                              { from $ const Do }
+of                              { from $ const Of }
+nil                             { from $ const Nil }
 
-","                             { token' $ const Comma }
-":"                             { token' $ const Colon }
-";"                             { token' $ const Semicolon }
-"("                             { token' $ const LeftParen }
-")"                             { token' $ const RightParen }
-"["                             { token' $ const LeftBracket }
-"]"                             { token' $ const RightBracket }
-"{"                             { token' $ const LeftBrace }
-"}"                             { token' $ const RightBrace }
-"."                             { token' $ const Dot }
-"+"                             { token' $ const Plus }
-"-"                             { token' $ const Minus }
-"*"                             { token' $ const Times }
-"/"                             { token' $ const Divide }
-"="                             { token' $ const Eq }
-">"                             { token' $ const Gt }
-">="                            { token' $ const Ge }
-"<"                             { token' $ const Lt }
-"<="                            { token' $ const Le }
-"<>"                            { token' $ const NotEq }
-"&"                             { token' $ const And }
-"|"                             { token' $ const Or }
-":="                            { token' $ const Assign }
-$digit+                         { token' $ Int . read }
-@id                             { token' $ ID }
+","                             { from $ const Comma }
+":"                             { from $ const Colon }
+";"                             { from $ const Semicolon }
+"("                             { from $ const LeftParen }
+")"                             { from $ const RightParen }
+"["                             { from $ const LeftBracket }
+"]"                             { from $ const RightBracket }
+"{"                             { from $ const LeftBrace }
+"}"                             { from $ const RightBrace }
+"."                             { from $ const Dot }
+"+"                             { from $ const Plus }
+"-"                             { from $ const Minus }
+"*"                             { from $ const Times }
+"/"                             { from $ const Divide }
+"="                             { from $ const Eq }
+">"                             { from $ const Gt }
+">="                            { from $ const Ge }
+"<"                             { from $ const Lt }
+"<="                            { from $ const Le }
+"<>"                            { from $ const NotEq }
+"&"                             { from $ const And }
+"|"                             { from $ const Or }
+":="                            { from $ const Assign }
+$digit+                         { from $ Int . read }
+@id                             { from $ ID }
 
 {
 alexEOF :: Alex (Token AlexPosn)
@@ -77,8 +77,8 @@ alexEOF = do
     let (p, _, _, _) = input
     return (EOF p)
 
-token' :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
-token' f = token (\(pos, _, _, s) len -> f (take len s) pos)
+from :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
+from f = token (\(pos, _, _, s) len -> f (take len s) pos)
 
 bad :: AlexAction (Token AlexPosn)
 bad = token (\(pos, _, _, s) len -> error (take len s))
