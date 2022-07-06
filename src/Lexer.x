@@ -80,9 +80,6 @@ alexEOF = do
 from :: (String -> AlexPosn -> (Token AlexPosn)) -> AlexAction (Token AlexPosn)
 from f = token (\(pos, _, _, s) len -> f (take len s) pos)
 
-bad :: AlexAction (Token AlexPosn)
-bad = token (\(pos, _, _, s) len -> error (take len s))
-
 data AlexUserState = AlexUserState {commentDepth :: Int} deriving (Show, Eq)
 
 alexInitUserState = AlexUserState 0
@@ -112,4 +109,18 @@ exitComment input len = do
     sc <- alexGetStartCode
     when (d <= 1) (alexSetStartCode 0)
     skip input len
+
+scanTokens :: String -> [Token AlexPosn]
+scanTokens input = case runAlex input monadScanTokens of
+  Left msg -> error msg
+  Right ts -> ts
+
+monadScanTokens :: Alex [Token AlexPosn]
+monadScanTokens = do
+  token <- alexMonadScan
+  case token of
+    EOF _ -> return [token]
+    p -> do
+      ts <- monadScanTokens
+      return (p : ts)
 }
