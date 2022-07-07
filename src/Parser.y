@@ -135,18 +135,18 @@ decs        : {- empty -}                           { [] }
             | decs dec                              { $1 ++ [$2] }
 
 dec :: { Dec }
-dec         : type id '=' ty                        { TypeDec (idValue $2) $4 @ $1 }
+dec         : type type_id '=' ty                   { TypeDec (idValue $2) $4 @ $1 }
             | var id ':=' expr                      { VarDec (idValue $2) $4 Nothing False @ $1 }
-            | var id ':' id ':=' expr               { VarDec (idValue $2) $6 (Just (idValue $4)) False @ $1 }
+            | var id ':' type_id ':=' expr          { VarDec (idValue $2) $6 (Just (idValue $4)) False @ $1 }
             | function id '(' ty_fields ')' '=' expr   
                                                     { FuncDec (idValue $2) $4 Nothing $7 @ $1 } 
             | function id '(' ty_fields ')' ':' id '=' expr    
                                                     { FuncDec (idValue $2) $4 (Just (idValue $7)) $9 @ $1 }
 
 ty :: { Type }
-ty          : id                                    { SimpleType (idValue $1) @ $1 }
+ty          : type_id                               { SimpleType (idValue $1) @ $1 }
             | '{' ty_fields '}'                     { Records $2 @ $1 }
-            | array of id                           { Array (idValue $3) @ $1 }
+            | array of type_id                      { Array (idValue $3) @ $1 }
 
 ty_fields :: { [Record] }
 ty_fields   : {- empty -}                           { [] }
@@ -157,7 +157,10 @@ ty_fields1  : ty_field                              { [$1] }
             | ty_fields1 ',' ty_field               { $1 ++ [$3] }
 
 ty_field :: { Record }
-ty_field    : id ':' id                             { Record (idValue $1) (idValue $3) False @ $1 }
+ty_field    : id ':' type_id                        { Record (idValue $1) (idValue $3) False @ $1 }
+
+type_id :: { Token AlexPosn }
+type_id     : id                                    { $1 }
 
 {
 parseError :: Token AlexPosn -> Alex a
