@@ -14,11 +14,9 @@ $any    = [ . \n ]
 
 token :-
 
-<string> ( [^\"] | \\ \" ) *    { from String }
-<string> \"                     { begin 0 }
-\"                              { begin string }
-
 $white+                         ;
+
+\" ( [^\"] | \\ \" ) * \"       { from $ String . read }
 
 "//" .*                         ;
 "/*"                            { enterComment }
