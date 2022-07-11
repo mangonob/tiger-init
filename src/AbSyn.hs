@@ -3,6 +3,9 @@ module AbSyn where
 import Lexer (AlexPosn (..))
 import Symbol (Sym)
 
+class Position a where
+  posn :: a -> AlexPosn
+
 data Expr
   = VarExpr Var
   | NilExpr AlexPosn
@@ -83,25 +86,25 @@ zero = IntExpr 0 (AlexPn 0 0 0)
 one :: Expr
 one = IntExpr 1 (AlexPn 0 0 0)
 
-exprPos :: Expr -> AlexPosn
-exprPos (VarExpr v) = varPos v
-exprPos (NilExpr p) = p
-exprPos (SeqExpr _ p) = p
-exprPos (IntExpr _ p) = p
-exprPos (StringExpr _ p) = p
-exprPos (UMinus _ p) = p
-exprPos Call {call_pos = p} = p
-exprPos (OpExpr _ _ _ p) = p
-exprPos RecordsExpr {records_pos = p} = p
-exprPos ArrayExpr {array_pos = p} = p
-exprPos (AssignExpr _ _ p) = p
-exprPos IFExpr {if_pos = p} = p
-exprPos WhileExpr {while_pos = p} = p
-exprPos ForExpr {for_pos = p} = p
-exprPos (BreakExpr p) = p
-exprPos LetExpr {let_pos = p} = p
+instance Position Expr where
+  posn (VarExpr v) = posn v
+  posn (NilExpr p) = p
+  posn (SeqExpr _ p) = p
+  posn (IntExpr _ p) = p
+  posn (StringExpr _ p) = p
+  posn (UMinus _ p) = p
+  posn Call {call_pos = p} = p
+  posn (OpExpr _ _ _ p) = p
+  posn RecordsExpr {records_pos = p} = p
+  posn ArrayExpr {array_pos = p} = p
+  posn (AssignExpr _ _ p) = p
+  posn IFExpr {if_pos = p} = p
+  posn WhileExpr {while_pos = p} = p
+  posn ForExpr {for_pos = p} = p
+  posn (BreakExpr p) = p
+  posn LetExpr {let_pos = p} = p
 
-varPos :: Var -> AlexPosn
-varPos (SimpleVar _ p) = p
-varPos (FieldVar _ _ p) = p
-varPos (IndexedVar _ _ p) = p
+instance Position Var where
+  posn (SimpleVar _ p) = p
+  posn (FieldVar _ _ p) = p
+  posn (IndexedVar _ _ p) = p

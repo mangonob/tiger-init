@@ -64,7 +64,7 @@ transExpr (Call func_name args p) = do
     Just (FuncEntry farmals return_ty) -> do
       argExpTys <- mapM transExpr args
       let argTys = fmap (\(ExpTy _ t) -> t) argExpTys
-      sequence_ $ checkType <$> ZipList argTys <*> ZipList farmals <*> ZipList (fmap exprPos args)
+      sequence_ $ checkType <$> ZipList argTys <*> ZipList farmals <*> ZipList (fmap posn args)
       case (compare `on` length) argTys farmals of
         LT -> do
           let ty = farmals !! max 0 (length argTys)
@@ -72,7 +72,7 @@ transExpr (Call func_name args p) = do
         GT -> do
           let ty = argTys !! max 0 (length farmals)
           let arg = args !! max 0 (length farmals)
-          error $ "unexcepted " ++ show ty ++ " type argument at position " ++ show (exprPos arg)
+          error $ "unexcepted " ++ show ty ++ " type argument at position " ++ show (posn arg)
         EQ -> return ()
       return $ ExpTy Nothing return_ty
     _ -> error $ "undefined function " ++ func_name ++ " at position " ++ show p
@@ -168,38 +168,38 @@ transExpr (ArrayExpr name size element p) = do
   case entry of
     Just arrayType@(T.ArrayType elementTy) -> do
       ExpTy _ sizeTy <- transExpr size
-      checkType sizeTy T.IntType (exprPos size)
+      checkType sizeTy T.IntType (posn size)
       ExpTy _ elementTy' <- transExpr element
-      checkType elementTy' elementTy (exprPos element)
+      checkType elementTy' elementTy (posn element)
       return $ ExpTy Nothing arrayType
     _ -> error $ "undefiend array type " ++ name
 transExpr (AssignExpr lvalue v p) = do
   ExpTy _ lvalueTy <- transVar lvalue
   ExpTy _ vType <- transExpr v
-  checkType lvalueTy vType (exprPos v)
+  checkType lvalueTy vType (posn v)
   return $ ExpTy Nothing T.Void
 transExpr (IFExpr pred succ Nothing p) = do
   ExpTy _ pTy <- transExpr pred
-  checkType pTy T.IntType (exprPos pred)
+  checkType pTy T.IntType (posn pred)
   ExpTy _ sTy <- transExpr succ
-  checkType sTy T.Void (exprPos succ)
+  checkType sTy T.Void (posn succ)
   return $ ExpTy Nothing T.Void
 transExpr (IFExpr pred succ (Just fail) p) = do
   ExpTy _ pTy <- transExpr pred
-  checkType pTy T.IntType (exprPos pred)
+  checkType pTy T.IntType (posn pred)
   ExpTy _ sTy <- transExpr succ
   ExpTy _ fTy <- transExpr fail
   checkType sTy fTy p
   return $ ExpTy Nothing sTy
 transExpr (WhileExpr pred body p) = do
   ExpTy _ p_ty <- transExpr pred
-  checkType p_ty T.IntType (exprPos pred)
+  checkType p_ty T.IntType (posn pred)
   transExpr body
 transExpr (ForExpr v_name from to body _ p) = do
   ExpTy _ f_ty <- transExpr from
   ExpTy _ t_ty <- transExpr to
-  checkType f_ty T.IntType (exprPos from)
-  checkType t_ty T.IntType (exprPos to)
+  checkType f_ty T.IntType (posn from)
+  checkType t_ty T.IntType (posn to)
   scopeBegin
   putVenv v_name (VarEntry T.IntType)
   ExpTy _ bodyTy <- transExpr body
@@ -229,7 +229,7 @@ transVar (FieldVar v s p) = do
     t -> error $ "can not access field \"" ++ s ++ "\" of type " ++ show t ++ " at position " ++ show p
 transVar (IndexedVar v exp p) = do
   ExpTy _ i_ty <- transExpr exp
-  checkType i_ty T.IntType (exprPos exp)
+  checkType i_ty T.IntType (posn exp)
   ExpTy _ v_ty <- transVar v
   case v_ty of
     T.ArrayType e_ty -> return $ ExpTy Nothing e_ty
@@ -281,7 +281,7 @@ transDec (VarDec name initial (Just typeName) _ p) = do
   case maybeEntry of
     Just ty -> do
       ExpTy _ initialTy <- transExpr initial
-      checkType ty initialTy (exprPos initial)
+      checkType ty initialTy (posn initial)
       putVenv name $ VarEntry ty
       return $ ExpTy Nothing T.Void
     _ -> error $ "undefined type " ++ typeName ++ " at position " ++ show p

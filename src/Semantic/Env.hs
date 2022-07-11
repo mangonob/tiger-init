@@ -45,25 +45,25 @@ scopeEnd :: State Env ()
 scopeEnd = get >>= \(Env t v) -> put $ Env (exit t) (exit v)
 
 baseEnv :: Env
-baseEnv = execState initEnv $ Env empty empty
-  where
-    baseTenv = empty
-    baseVenv = empty
-
-    initEnv = do
-      putTenv "int" IntType
-      putTenv "string" StringType
-
-      putVenv "print" $ FuncEntry [StringType] Void
-      putVenv "flush" $ FuncEntry [] Void
-      putVenv "getchar" $ FuncEntry [] StringType
-      putVenv "ord" $ FuncEntry [StringType] IntType
-      putVenv "chr" $ FuncEntry [IntType] StringType
-      putVenv "size" $ FuncEntry [StringType] IntType
-      putVenv "substring" $ FuncEntry [StringType, IntType, IntType] StringType
-      putVenv "concat" $ FuncEntry [StringType, StringType] StringType
-      putVenv "not" $ FuncEntry [IntType] IntType
-      putVenv "exit" $ FuncEntry [IntType] Void
+baseEnv =
+  Env
+    { tenv =
+        empty
+          & ("int", IntType)
+          & ("string", StringType),
+      venv =
+        empty
+          & ("print", FuncEntry [StringType] Void)
+          & ("flush", FuncEntry [] Void)
+          & ("getchar", FuncEntry [] StringType)
+          & ("ord", FuncEntry [StringType] IntType)
+          & ("chr", FuncEntry [IntType] StringType)
+          & ("size", FuncEntry [StringType] IntType)
+          & ("substring", FuncEntry [StringType, IntType, IntType] StringType)
+          & ("concat", FuncEntry [StringType, StringType] StringType)
+          & ("not", FuncEntry [IntType] IntType)
+          & ("exit", FuncEntry [IntType] Void)
+    }
 
 instance Show Env where
   show (Env t v) =

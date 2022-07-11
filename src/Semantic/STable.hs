@@ -10,13 +10,13 @@ module Semantic.STable
     enter,
     exit,
     lookup,
+    (&),
   )
 where
 
 import Data.Char (isSpace)
 import qualified Data.Map as Map
 import Data.Maybe (Maybe (Just, Nothing))
-import Semantic.Types
 import Symbol (Sym)
 import Text.Printf (printf)
 import Prelude hiding (lookup)
@@ -33,6 +33,9 @@ singleton s t = STable {prev = Nothing, table = Table $ Map.singleton s t}
 
 insert :: Sym -> a -> STable a -> STable a
 insert s t STable {prev = a, table = b} = STable {prev = a, table = Table $ Map.insert s t (toList b)}
+
+(&) :: STable a -> (Sym, a) -> STable a
+st & (s, t) = insert s t st
 
 enter :: STable a -> STable a
 enter st = STable {prev = Just st, table = Table Map.empty}
