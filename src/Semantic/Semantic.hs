@@ -2,6 +2,7 @@ module Semantic.Semantic
   ( Exp (..),
     ExpTy (..),
     transExpr,
+    translate,
   )
 where
 
@@ -342,6 +343,9 @@ transType (Array elemName p) = do
 
 _fatalCurrentEnv :: State Env a
 _fatalCurrentEnv = get >>= error . show
+
+translate :: Expr -> ExpTy
+translate expr = evalState (transExpr expr) baseEnv
 
 main :: IO ()
 main = do

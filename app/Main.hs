@@ -3,6 +3,7 @@ module Main where
 import Lexer (runAlex, scanTokens)
 import Parser (parser)
 import Raw (raw)
+import Semantic.Semantic (translate)
 import System.Environment (getArgs)
 
 main :: IO ()
@@ -17,6 +18,11 @@ main = do
     ("-t" : filename : _) -> do
       contents <- readFile filename
       print $ scanTokens contents
+    ("-s" : filename : _) -> do
+      contents <- readFile filename
+      case runAlex contents parser of
+        Left msg -> putStrLn msg
+        Right expr -> print $ translate expr
     (filename : _) -> do
       contents <- readFile filename
       case runAlex contents parser of
@@ -26,7 +32,8 @@ main = do
       putStrLn $
         unlines
           [ "usage: command_name [-r|-t|-h] [file_name]",
-            "    -r   Raw text file.",
-            "    -t   Scan tokens.",
-            "    -h   Show help message."
+            "    -r   Raw text file",
+            "    -t   Scan tokens",
+            "    -t   Semantic",
+            "    -h   Show help message"
           ]
