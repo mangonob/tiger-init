@@ -244,7 +244,7 @@ transDecHead dec = case dec of
     putVenv name $ FuncEntry (fmap recordNamedType parameters) T.Void
   FuncDec name parameters (Just returnTypeName) body p ->
     putVenv name $ FuncEntry (fmap recordNamedType parameters) (T.NamedType returnTypeName Nothing)
-  _ -> return ()
+  VarDec {} -> return ()
   where
     recordNamedType r = T.NamedType (record_type r) Nothing
 
@@ -340,9 +340,6 @@ transType (Array elemName p) = do
   case maybeTy of
     Just ty -> return $ ExpTy Nothing (T.ArrayType ty)
     Nothing -> error $ "undefined type " ++ elemName ++ " at position " ++ show p
-
-_fatalCurrentEnv :: State Env a
-_fatalCurrentEnv = get >>= error . show
 
 translate :: Expr -> ExpTy
 translate expr = evalState (transExpr expr) baseEnv
