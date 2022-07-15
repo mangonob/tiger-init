@@ -88,7 +88,7 @@ transExpr (OpExpr e1 op e2 p) = do
     MinusOp ->
       if t1 == T.IntType && t2 == T.IntType
         then return $ ExpTy Nothing T.IntType
-        else error "\"+\" operator only work with both int type"
+        else error "\"-\" operator only work with both int type"
     TimesOp ->
       if t1 == T.IntType && t2 == T.IntType
         then return $ ExpTy Nothing T.IntType
@@ -209,11 +209,23 @@ transExpr (ForExpr v_name from to body _ p) = do
 transExpr (BreakExpr p) = return $ ExpTy Nothing T.Void
 transExpr (LetExpr decs body p) = do
   scopeBegin
-  mapM_ transDecHead decs
+  mapM_ decFirstPass decs
   mapM_ transDec decs
   ExpTy _ bodyTy <- transExpr body
   scopeEnd
   return $ ExpTy Nothing bodyTy
+  where
+    decFirstPass :: Dec -> State Env ()
+    decFirstPass dec = case dec of
+      TypeDec name _ _ ->
+        putTenv name $ T.NamedType name Nothing
+      FuncDec name parameters Nothing body p ->
+        putVenv name $ FuncEntry (fmap recordNamedType parameters) T.Void
+      FuncDec name parameters (Just returnTypeName) body p ->
+        putVenv name $ FuncEntry (fmap recordNamedType parameters) (T.NamedType returnTypeName Nothing)
+      VarDec {} -> return ()
+      where
+        recordNamedType r = T.NamedType (record_type r) Nothing
 
 transVar :: Var -> State Env ExpTy
 transVar (SimpleVar s p) = do
@@ -235,18 +247,6 @@ transVar (IndexedVar v exp p) = do
   case v_ty of
     T.ArrayType e_ty -> return $ ExpTy Nothing e_ty
     _ -> error $ "indexed is not a type of array at position " ++ show p
-
-transDecHead :: Dec -> State Env ()
-transDecHead dec = case dec of
-  TypeDec name _ _ ->
-    putTenv name $ T.NamedType name Nothing
-  FuncDec name parameters Nothing body p ->
-    putVenv name $ FuncEntry (fmap recordNamedType parameters) T.Void
-  FuncDec name parameters (Just returnTypeName) body p ->
-    putVenv name $ FuncEntry (fmap recordNamedType parameters) (T.NamedType returnTypeName Nothing)
-  VarDec {} -> return ()
-  where
-    recordNamedType r = T.NamedType (record_type r) Nothing
 
 actualType :: T.Type -> AlexPosn -> State Env T.Type
 actualType (T.NamedType name Nothing) p = do
