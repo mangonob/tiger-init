@@ -40,6 +40,6 @@ main = do
             "    -r   Raw text file",
             "    -a   Abstract syntax tree",
             "    -t   Scan tokens",
-            "    -t   Semantic",
+            "    -s   Semantic",
             "    -h   Show help message"
           ]
