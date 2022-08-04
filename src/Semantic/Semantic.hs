@@ -27,11 +27,11 @@ checkType :: T.Type -> T.Type -> AlexPosn -> State Env Bool
 checkType t1 t2 p = do
   actualTy1 <- actualType t1 p
   actualTy2 <- actualType t2 p
-  campatible actualTy1 actualTy2
+  compatible actualTy1 actualTy2
   where
-    campatible (T.RecordType _) T.NilType = return True
-    campatible T.NilType (T.RecordType _) = return True
-    campatible t1 t2
+    compatible (T.RecordType _) T.NilType = return True
+    compatible T.NilType (T.RecordType _) = return True
+    compatible t1 t2
       | t1 == t2 = return True
       | otherwise = error $ "type " ++ show t1 ++ " is not match with " ++ show t2 ++ " at position " ++ show p
 
