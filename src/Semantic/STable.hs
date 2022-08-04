@@ -7,10 +7,10 @@ module Semantic.STable
     empty,
     singleton,
     insert,
-    enter,
-    exit,
+    fromList,
+    create,
+    drop,
     lookup,
-    (&),
   )
 where
 
@@ -19,7 +19,7 @@ import qualified Data.Map as Map
 import Data.Maybe (Maybe (Just, Nothing))
 import Symbol (Sym)
 import Text.Printf (printf)
-import Prelude hiding (lookup)
+import Prelude hiding (drop, lookup)
 
 newtype Table a = Table {toList :: Map.Map Sym a}
 
@@ -34,15 +34,16 @@ singleton s t = STable {prev = Nothing, table = Table $ Map.singleton s t}
 insert :: Sym -> a -> STable a -> STable a
 insert s t STable {prev = a, table = b} = STable {prev = a, table = Table $ Map.insert s t (toList b)}
 
-(&) :: STable a -> (Sym, a) -> STable a
-st & (s, t) = insert s t st
+fromList :: [(Sym, a)] -> STable a
+fromList [] = empty
+fromList ((s, v) : xs) = insert s v (fromList xs)
 
-enter :: STable a -> STable a
-enter st = STable {prev = Just st, table = Table Map.empty}
+create :: STable a -> STable a
+create st = STable {prev = Just st, table = Table Map.empty}
 
-exit :: STable a -> STable a
-exit STable {prev = Nothing, table = _} = error "can not exit"
-exit STable {prev = Just st, table = b} = st
+drop :: STable a -> STable a
+drop STable {prev = Nothing, table = _} = error "can not exit"
+drop STable {prev = Just st, table = b} = st
 
 lookup :: Sym -> STable a -> Maybe a
 lookup s STable {prev = a, table = b} = case Map.lookup s (toList b) of

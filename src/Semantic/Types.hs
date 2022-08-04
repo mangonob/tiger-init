@@ -25,3 +25,11 @@ instance Show Type where
     "{" ++ join (intersperse ", " (map showRecord xs)) ++ "}"
     where
       showRecord (s, t) = s ++ ": " ++ show t
+
+isArray :: Type -> Bool
+isArray (ArrayType _) = True
+isArray _ = False
+
+isRecord :: Type -> Bool
+isRecord (RecordType _) = True
+isRecord _ = False

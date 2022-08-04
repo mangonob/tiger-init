@@ -35,6 +35,7 @@ library
       Semantic.FindEscape
       Semantic.Frame
       Semantic.NASMFrame
+      Semantic.Sem
       Semantic.Semantic
       Semantic.STable
       Semantic.Temp
