@@ -136,8 +136,8 @@ transExpr (OpExpr e1 op e2 p) = do
       | T.isArray t1 && t1 == t2 = return ()
       | T.isRecord t1 && t1 == t2 = return ()
       | otherwise =
-        semError $
-          "can not compare equality with \"" ++ show t1 ++ "\" and \"" ++ show t2 ++ "\" at position " ++ show p
+          semError $
+            "can not compare equality with \"" ++ show t1 ++ "\" and \"" ++ show t2 ++ "\" at position " ++ show p
 
     canNotCompareError t1 t2 = semError $ "can not compare " ++ show t1 ++ " with " ++ show t2 ++ " at position " ++ show p
 transExpr (RecordsExpr name fields p) = do
@@ -272,10 +272,10 @@ actualType (T.NamedType name Nothing) p = do
     actualType' (T.NamedType name' Nothing) p
       | name' == name = semError $ "unresolved type because loop define of type " ++ name ++ " at position " ++ show p
       | otherwise = do
-        maybeTy <- findType name'
-        case maybeTy of
-          Just ty -> actualType' ty p
-          _ -> semError $ "undefined type " ++ name ++ " at position " ++ show p
+          maybeTy <- findType name'
+          case maybeTy of
+            Just ty -> actualType' ty p
+            _ -> semError $ "undefined type " ++ name ++ " at position " ++ show p
     actualType' (T.ArrayType ty) p = actualType' ty p <&> T.ArrayType
     actualType' t _ = return t
 actualType (T.NamedType name (Just ty)) p = actualType ty p

@@ -10,6 +10,7 @@ module Semantic.STable
     fromList,
     create,
     drop,
+    length,
     lookup,
   )
 where
@@ -19,7 +20,7 @@ import qualified Data.Map as Map
 import Data.Maybe (Maybe (Just, Nothing))
 import Symbol (Sym)
 import Text.Printf (printf)
-import Prelude hiding (drop, lookup)
+import Prelude hiding (drop, length, lookup)
 
 newtype Table a = Table {toList :: Map.Map Sym a}
 
@@ -44,6 +45,10 @@ create st = STable {prev = Just st, table = Table Map.empty}
 drop :: STable a -> STable a
 drop STable {prev = Nothing, table = _} = error "can not exit"
 drop STable {prev = Just st, table = b} = st
+
+length :: STable a -> Int
+length STable {prev = Nothing, table = Table t} = Map.size t
+length STable {prev = Just st, table = Table t} = Map.size t + length st
 
 lookup :: Sym -> STable a -> Maybe a
 lookup s STable {prev = a, table = b} = case Map.lookup s (toList b) of

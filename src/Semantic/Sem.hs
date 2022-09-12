@@ -1,7 +1,8 @@
 module Semantic.Sem
   ( Sem (..),
     semError,
-    get,
+    semGetEnv,
+    generateNewTypeID,
     findType,
     insertType,
     findVar,
@@ -12,12 +13,14 @@ module Semantic.Sem
 where
 
 import Semantic.Env (Env (Env), EnvEntry)
-import Semantic.STable
-import Semantic.Types (Type)
+import Semantic.STable (create, drop, insert, length, lookup)
+import Semantic.Types (Type, TypeID)
 import Symbol (Sym)
-import Prelude hiding (drop, lookup)
+import Prelude hiding (drop, length, lookup)
 
-newtype Sem a = Sem {runSem :: Env -> Either String (Env, a)}
+data SemState = SemState {env :: Env, currentTypeId :: TypeID} deriving (Show)
+
+newtype Sem a = Sem {runSem :: SemState -> Either String (SemState, a)}
 
 instance Functor Sem where
   fmap f s = Sem $ \e -> case runSem s e of
@@ -41,26 +44,38 @@ instance Monad Sem where
 semError :: String -> Sem a
 semError msg = Sem $ \e -> Left msg
 
-get :: Sem Env
-get = Sem $ \e -> Right (e, e)
+semGetState :: Sem SemState
+semGetState = Sem $ \s -> Right (s, s)
 
-put :: Env -> Sem ()
-put e = Sem $ \_ -> Right (e, ())
+semSetState :: SemState -> Sem ()
+semSetState s = Sem $ \_ -> Right (s, ())
+
+semGetEnv :: Sem Env
+semGetEnv = Sem $ \s -> Right (s, env s)
+
+semPutEnv :: Env -> Sem ()
+semPutEnv e = Sem $ \s -> Right (s {env = e}, ())
+
+generateNewTypeID :: Sem TypeID
+generateNewTypeID = do
+  SemState e i <- semGetState
+  semSetState $ SemState e (i + 1)
+  return i
 
 findType :: Sym -> Sem (Maybe Type)
-findType s = get >>= \(Env t _) -> return $ lookup s t
+findType s = semGetEnv >>= \(Env t _) -> return $ lookup s t
 
 insertType :: Sym -> Type -> Sem ()
-insertType s val = get >>= \(Env t v) -> put $ Env (insert s val t) v
+insertType s ty = semGetEnv >>= \(Env t v) -> semPutEnv $ Env (insert s ty t) v
 
 findVar :: Sym -> Sem (Maybe EnvEntry)
-findVar s = get >>= \(Env t v) -> return $ lookup s v
+findVar s = semGetEnv >>= \(Env t v) -> return $ lookup s v
 
 insertVar :: Sym -> EnvEntry -> Sem ()
-insertVar s e = get >>= \(Env t v) -> put $ Env t (insert s e v)
+insertVar s e = semGetEnv >>= \(Env t v) -> semPutEnv $ Env t (insert s e v)
 
 scopeBegin :: Sem ()
-scopeBegin = get >>= \(Env t v) -> put $ Env (create t) (create v)
+scopeBegin = semGetEnv >>= \(Env t v) -> semPutEnv $ Env (create t) (create v)
 
 scopeEnd :: Sem ()
-scopeEnd = get >>= \(Env t v) -> put $ Env (drop t) (drop v)
+scopeEnd = semGetEnv >>= \(Env t v) -> semPutEnv $ Env (drop t) (drop v)
