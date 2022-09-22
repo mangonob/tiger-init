@@ -1,7 +1,10 @@
 module Semantic.Types where
 
 import Control.Monad (join)
-import Data.List (intersperse)
+import Control.Monad.State (State, evalState, get, put)
+import Data.Function (on)
+import Data.Functor ((<&>))
+import Data.List (intercalate, union)
 import Data.Set (fromList)
 import Symbol (Sym)
 
@@ -12,45 +15,49 @@ data Type
   | NilType
   | IntType
   | StringType
-  | ArrayType TypeID Type
-  | RecordType TypeID [(Sym, Type)]
+  | ArrayType Type
+  | RecordType [(Sym, Type)]
   | NamedType Sym (Maybe Type)
-  deriving (Ord)
+  | RefType (Ref Type)
+  deriving (Eq)
 
-instance Show Type where
-  show = showWithPath [] []
+data Ref a = Ref {ref :: Int, value :: a} deriving (Show)
 
-showWithPath :: [TypeID] -> [TypeID] -> Type -> String
-showWithPath _ _ NilType = "nil"
-showWithPath _ _ IntType = "int"
-showWithPath _ _ Void = "void"
-showWithPath _ _ StringType = "string"
-showWithPath ats rts (ArrayType i t) =
-  if i `elem` ats
-    then "a" ++ show i
-    else "a" ++ show i ++ ": [" ++ showWithPath (i : ats) rts t ++ "]"
-showWithPath ats rts (RecordType i records) =
-  if i `elem` ats
-    then "r" ++ show i
-    else "r" ++ show i ++ ": {" ++ join (intersperse ", " (fmap showRecord records)) ++ "}"
-  where
-    showRecord (s, t) = s ++ ": " ++ showWithPath ats (i : rts) t
-showWithPath ats rts (NamedType s t) = s ++ maybe " ->" ((" -> " ++) . showWithPath ats rts) t
+instance Eq (Ref a) where
+  (==) = (==) `on` ref
 
-instance Eq Type where
-  Void == Void = True
-  NilType == NilType = True
-  IntType == IntType = True
-  StringType == StringType = True
-  ArrayType i t1 == ArrayType i' t2 = i == i' || t1 == t2
-  RecordType i rs1 == RecordType i' rs2 = i == i' || fromList rs1 == fromList rs2
-  NamedType s t == NamedType s' t' = s == s' && t == t'
-  _ == _ = False
+type Visited a = State ([TypeID], [TypeID]) a
+
+meetArray :: TypeID -> Visited ()
+meetArray t = get >>= \(ats, rts) -> put (t : ats, rts)
+
+meetRecord :: TypeID -> Visited ()
+meetRecord t = get >>= \(ats, rts) -> put (ats, t : rts)
+
+metArray :: TypeID -> Visited Bool
+metArray t = get <&> (elem t . fst)
+
+metRecord :: TypeID -> Visited Bool
+metRecord t = get <&> (elem t . snd)
+
+runVisited :: Visited a -> a
+runVisited v = evalState v ([], [])
 
 isArray :: Type -> Bool
-isArray (ArrayType _ _) = True
+isArray (ArrayType _) = True
 isArray _ = False
 
 isRecord :: Type -> Bool
-isRecord (RecordType _ _) = True
+isRecord (RecordType _) = True
 isRecord _ = False
+
+instance Show Type where
+  show Void = "void"
+  show NilType = "nil"
+  show IntType = "int"
+  show StringType = "string"
+  show (ArrayType t) = "[" ++ show t ++ "]"
+  show (RecordType fs) = "{" ++ intercalate ", " (showRecord <$> fs) ++ "}"
+    where
+      showRecord (s, t) = show s ++ ": " ++ show t
+  show _ = undefined
